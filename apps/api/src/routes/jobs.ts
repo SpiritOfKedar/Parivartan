@@ -57,7 +57,7 @@ jobsRouter.post("/", async (req, res, next) => {
       if (!isRedisConfigured()) {
         res.status(503).json({
           error:
-            "Redis not configured. Set UPSTASH_REDIS_REST_* env vars for server jobs.",
+            "Redis not configured. Set UPSTASH_REDIS_URL in apps/api/.env",
         });
         return;
       }

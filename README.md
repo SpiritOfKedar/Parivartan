@@ -80,9 +80,7 @@ Set `DATABASE_URL` to your Neon **pooled** connection string in `apps/api/.env`.
 
 ## Queue (Upstash Redis)
 
-Server-side jobs are pushed to `queue:server-jobs` via the Upstash REST API. Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in `apps/api/.env`.
-
-When you wire BullMQ workers, add `UPSTASH_REDIS_URL` (the `rediss://` protocol URL from the Upstash console).
+Server-side jobs are pushed to `queue:server-jobs` via `ioredis` using the `rediss://` URL from the Upstash console. Set `UPSTASH_REDIS_URL` in `apps/api/.env` — the same URL works for BullMQ workers later.
 
 ## Storage (Backblaze B2)
 
@@ -105,6 +103,6 @@ Returns `uploadUrl` — `PUT` the file to that URL with the `Content-Type` heade
 
 ## Next steps
 
-1. Wire BullMQ workers using `UPSTASH_REDIS_URL` (Redis protocol URL from Upstash)
+1. Wire BullMQ workers (reuse `UPSTASH_REDIS_URL`)
 2. Connect upload UI (Uppy) to the presign endpoint
 3. Implement first tool end-to-end (e.g. merge PDF)

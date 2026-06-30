@@ -1,10 +1,7 @@
-import { Redis } from "@upstash/redis";
+import { Redis } from "ioredis";
 
 export function isRedisConfigured(): boolean {
-  return Boolean(
-    process.env.UPSTASH_REDIS_REST_URL?.trim() &&
-      process.env.UPSTASH_REDIS_REST_TOKEN?.trim(),
-  );
+  return Boolean(process.env.UPSTASH_REDIS_URL?.trim());
 }
 
 let redis: Redis | null = null;
@@ -12,21 +9,23 @@ let redis: Redis | null = null;
 export function getRedis(): Redis {
   if (!isRedisConfigured()) {
     throw new Error(
-      "Upstash Redis is not configured. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.",
+      "Upstash Redis is not configured. Set UPSTASH_REDIS_URL (rediss://...) in apps/api/.env",
     );
   }
 
   if (!redis) {
-    redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    redis = new Redis(process.env.UPSTASH_REDIS_URL!, {
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
     });
   }
 
   return redis;
 }
 
-/** BullMQ workers need a Redis protocol URL (rediss://). REST credentials are for API-side queue ops. */
-export function isBullMqConfigured(): boolean {
-  return Boolean(process.env.UPSTASH_REDIS_URL?.trim());
+export async function closeRedis(): Promise<void> {
+  if (redis) {
+    await redis.quit();
+    redis = null;
+  }
 }
