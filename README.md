@@ -30,9 +30,11 @@ infra/
 ## Prerequisites
 
 - Node.js 20+
+- [Neon](https://neon.tech) Postgres project (free tier)
+- [Upstash](https://upstash.com) Redis database (free tier)
 - [Backblaze B2](https://www.backblaze.com/b2/cloud-storage.html) bucket (10 GB free tier)
 
-No Docker required for now.
+No Docker required for local dev.
 
 ## Getting started
 
@@ -46,7 +48,8 @@ npm run build --workspace=@convert-hub/conversion-rules
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
 
-# Add B2 credentials to apps/api/.env, then:
+# Add Neon, Upstash, and B2 credentials to apps/api/.env, then:
+npm run db:migrate --workspace=@convert-hub/api
 npm run dev
 ```
 
@@ -60,6 +63,26 @@ npm run dev
 | `npm run dev` | Start web + API in parallel (via Turborepo) |
 | `npm run build` | Build all packages and apps |
 | `npm run typecheck` | Type-check all workspaces |
+| `npm run db:migrate --workspace=@convert-hub/api` | Apply pending SQL migrations to Neon |
+
+## Database (Neon Postgres)
+
+Raw SQL only — no ORM. Migrations live in `apps/api/db/migrations/` and are tracked in a `schema_migrations` table.
+
+```bash
+# Apply pending migrations (also runs automatically on API startup)
+npm run db:migrate --workspace=@convert-hub/api
+```
+
+Add new migrations as numbered files, e.g. `002_users.sql`. Each file runs once inside a transaction.
+
+Set `DATABASE_URL` to your Neon **pooled** connection string in `apps/api/.env`.
+
+## Queue (Upstash Redis)
+
+Server-side jobs are pushed to `queue:server-jobs` via the Upstash REST API. Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in `apps/api/.env`.
+
+When you wire BullMQ workers, add `UPSTASH_REDIS_URL` (the `rediss://` protocol URL from the Upstash console).
 
 ## Storage (Backblaze B2)
 
@@ -82,6 +105,6 @@ Returns `uploadUrl` — `PUT` the file to that URL with the `Content-Type` heade
 
 ## Next steps
 
-1. Wire BullMQ + Redis in API and workers (when you add infra)
+1. Wire BullMQ workers using `UPSTASH_REDIS_URL` (Redis protocol URL from Upstash)
 2. Connect upload UI (Uppy) to the presign endpoint
 3. Implement first tool end-to-end (e.g. merge PDF)

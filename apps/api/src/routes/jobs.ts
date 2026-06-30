@@ -1,7 +1,11 @@
 import { Router } from "express";
 import { z } from "zod";
 import { routeJob } from "@convert-hub/conversion-rules";
-import type { CreateJobRequest, Job } from "@convert-hub/shared";
+import type { CreateJobRequest } from "@convert-hub/shared";
+import { isDatabaseConfigured } from "../config/db.js";
+import { isRedisConfigured } from "../config/redis.js";
+import { getJobById, insertJob } from "../db/queries/jobs.js";
+import { enqueueServerJob } from "../lib/queue.js";
 
 export const jobsRouter = Router();
 
@@ -10,37 +14,83 @@ const createJobSchema = z.object({
   fileName: z.string().min(1),
   mimeType: z.string().min(1),
   sizeBytes: z.number().int().positive(),
+  storageKey: z.string().min(1).optional(),
 });
 
-jobsRouter.post("/", (req, res) => {
-  const parsed = createJobSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
+jobsRouter.post("/", async (req, res, next) => {
+  try {
+    if (!isDatabaseConfigured()) {
+      res.status(503).json({
+        error: "Database not configured. Set DATABASE_URL in apps/api/.env",
+      });
+      return;
+    }
+
+    const parsed = createJobSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() });
+      return;
+    }
+
+    const body = parsed.data as CreateJobRequest & { storageKey?: string };
+    const processing = routeJob({
+      sizeBytes: body.sizeBytes,
+      toolId: body.tool,
+    });
+
+    const status = processing === "client" ? "client_ready" : "queued";
+    const id = crypto.randomUUID();
+
+    const job = await insertJob({
+      id,
+      tool: body.tool,
+      status,
+      progress: 0,
+      processing,
+      fileName: body.fileName,
+      mimeType: body.mimeType,
+      sizeBytes: body.sizeBytes,
+      storageKey: body.storageKey,
+    });
+
+    if (processing === "server") {
+      if (!isRedisConfigured()) {
+        res.status(503).json({
+          error:
+            "Redis not configured. Set UPSTASH_REDIS_REST_* env vars for server jobs.",
+        });
+        return;
+      }
+
+      await enqueueServerJob({ jobId: job.id, tool: job.tool });
+    }
+
+    res.status(201).json({ job });
+  } catch (error) {
+    next(error);
   }
-
-  const body = parsed.data as CreateJobRequest;
-  const processing = routeJob({
-    sizeBytes: body.sizeBytes,
-    toolId: body.tool,
-  });
-
-  const job: Job = {
-    id: crypto.randomUUID(),
-    tool: body.tool,
-    status: processing === "client" ? "client_ready" : "queued",
-    progress: 0,
-    processing,
-    createdAt: new Date().toISOString(),
-  };
-
-  // TODO: enqueue server jobs to BullMQ when worker layer is added
-  res.status(201).json({ job });
 });
 
-jobsRouter.get("/:id", (req, res) => {
-  res.status(404).json({
-    error: "Job not found",
-    id: req.params.id,
-  });
+jobsRouter.get("/:id", async (req, res, next) => {
+  try {
+    if (!isDatabaseConfigured()) {
+      res.status(503).json({
+        error: "Database not configured. Set DATABASE_URL in apps/api/.env",
+      });
+      return;
+    }
+
+    const job = await getJobById(req.params.id);
+    if (!job) {
+      res.status(404).json({
+        error: "Job not found",
+        id: req.params.id,
+      });
+      return;
+    }
+
+    res.json({ job });
+  } catch (error) {
+    next(error);
+  }
 });
