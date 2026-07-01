@@ -1,7 +1,7 @@
 import { convertWithLibreOffice } from "./libreoffice.js";
 import { prepareSearchablePdf } from "./ocr-pdf.js";
 
-export async function convertPdfToDocx(
+export async function convertPdfToPptx(
   inputPath: string,
   outputDir: string,
   workDir: string,
@@ -14,10 +14,10 @@ export async function convertPdfToDocx(
     onStage?.("Running OCR on scanned pages…");
   }
 
-  onStage?.("Converting to Word with LibreOffice…");
+  onStage?.("Converting to PowerPoint with LibreOffice…");
   return convertWithLibreOffice(prepared.inputPath, outputDir, {
-    infilter: "writer_pdf_import",
-    outputFormat: "docx",
-    expectedExt: ".docx",
+    infilter: "impress_pdf_import",
+    outputFormat: "pptx",
+    expectedExt: ".pptx",
   });
 }

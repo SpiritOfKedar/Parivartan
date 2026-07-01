@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { routeJob } from "@convert-hub/conversion-rules";
+import { getToolOutput, outputFileNameForTool } from "@convert-hub/shared";
 import { isDatabaseConfigured } from "../config/db.js";
 import { isRedisConfigured } from "../config/redis.js";
 import { isStorageConfigured } from "../config/storage.js";
@@ -78,12 +79,6 @@ jobsRouter.post("/", async (req, res, next) => {
   }
 });
 
-function outputFileName(inputName: string): string {
-  const dot = inputName.lastIndexOf(".");
-  const stem = dot > 0 ? inputName.slice(0, dot) : inputName;
-  return `${stem}.docx`;
-}
-
 jobsRouter.get("/:id/download", async (req, res, next) => {
   try {
     if (!isDatabaseConfigured()) {
@@ -105,11 +100,12 @@ jobsRouter.get("/:id/download", async (req, res, next) => {
     }
 
     const bytes = await getObjectBytes(job.output_url);
-    const fileName = outputFileName(job.file_name);
+    const outputMeta = getToolOutput(job.tool);
+    const fileName = outputFileNameForTool(job.file_name, job.tool);
 
     res.setHeader(
       "Content-Type",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      outputMeta?.mimeType ?? "application/octet-stream",
     );
     res.setHeader(
       "Content-Disposition",

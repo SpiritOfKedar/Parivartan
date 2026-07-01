@@ -1,11 +1,29 @@
 "use client";
 
+import { getToolOutput } from "@convert-hub/shared";
 import { useRef, useState } from "react";
-import { downloadJobResult, uploadFileAndCreateJob, waitForJob } from "../lib/api-client";
+import {
+  downloadJobResult,
+  uploadFileAndCreateJob,
+  waitForJob,
+} from "../lib/api-client";
 import { downloadBlob } from "../lib/merge-pdf";
 import { baseName } from "../lib/split-pdf";
 
 type Phase = "idle" | "uploading" | "processing" | "done" | "error";
+
+export interface ServerConversionToolProps {
+  toolId: string;
+  accept: string;
+  uploadLabel: string;
+  uploadHint: string;
+  validateFile: (file: File) => string | null;
+  convertLabel: string;
+  convertingLabel?: string;
+  downloadLabel: string;
+  successMessage: string;
+  maxBytes?: number;
+}
 
 function formatSize(bytes: number): string {
   if (bytes < 1024 * 1024) {
@@ -14,11 +32,18 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function isPdf(file: File): boolean {
-  return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-}
-
-export function PdfToWordTool() {
+export function ServerConversionTool({
+  toolId,
+  accept,
+  uploadLabel,
+  uploadHint,
+  validateFile,
+  convertLabel,
+  convertingLabel = "Converting…",
+  downloadLabel,
+  successMessage,
+  maxBytes = 25 * 1024 * 1024,
+}: ServerConversionToolProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -27,11 +52,12 @@ export function PdfToWordTool() {
   const [progressLabel, setProgressLabel] = useState<string | null>(null);
   const [completedJobId, setCompletedJobId] = useState<string | null>(null);
 
-  const maxBytes = 25 * 1024 * 1024;
+  const outputExtension = getToolOutput(toolId)?.extension ?? ".bin";
 
   function selectFile(incoming: File) {
-    if (!isPdf(incoming)) {
-      setError("Only PDF files are accepted.");
+    const validationError = validateFile(incoming);
+    if (validationError) {
+      setError(validationError);
       setPhase("error");
       return;
     }
@@ -68,10 +94,10 @@ export function PdfToWordTool() {
     setPhase("uploading");
     setError(null);
     setCompletedJobId(null);
-    setProgressLabel("Uploading PDF…");
+    setProgressLabel("Uploading…");
 
     try {
-      const job = await uploadFileAndCreateJob(file, "pdf-to-word");
+      const job = await uploadFileAndCreateJob(file, toolId);
       setPhase("processing");
       setProgressLabel("Converting on server…");
 
@@ -94,7 +120,7 @@ export function PdfToWordTool() {
       setProgressLabel(null);
     } catch (cause) {
       const message =
-        cause instanceof Error ? cause.message : "Could not convert this PDF.";
+        cause instanceof Error ? cause.message : "Could not convert this file.";
       setError(message);
       setPhase("error");
       setProgressLabel(null);
@@ -108,7 +134,7 @@ export function PdfToWordTool() {
 
     try {
       const blob = await downloadJobResult(completedJobId);
-      downloadBlob(blob, `${baseName(file.name)}.docx`);
+      downloadBlob(blob, `${baseName(file.name)}${outputExtension}`);
     } catch (cause) {
       const message =
         cause instanceof Error ? cause.message : "Download failed.";
@@ -152,7 +178,7 @@ export function PdfToWordTool() {
         <input
           ref={inputRef}
           type="file"
-          accept="application/pdf,.pdf"
+          accept={accept}
           className="hidden"
           onChange={(event) => {
             const selected = event.target.files?.[0];
@@ -162,10 +188,10 @@ export function PdfToWordTool() {
             event.target.value = "";
           }}
         />
-        <p className="text-[15px] text-foreground">Select a PDF file</p>
+        <p className="text-[15px] text-foreground">{uploadLabel}</p>
         <p className="mt-1.5 text-sm text-muted">or drag and drop here</p>
         <p className="mt-3 text-xs text-faint">
-          Up to {formatSize(maxBytes)} · converted on our servers with LibreOffice
+          Up to {formatSize(maxBytes)} · {uploadHint}
         </p>
       </div>
 
@@ -185,13 +211,6 @@ export function PdfToWordTool() {
             </button>
           </div>
 
-          <p className="text-sm text-muted">
-            Your PDF is uploaded to our API, converted with LibreOffice, and deleted
-            within 24 hours. Scanned PDFs are OCR&apos;d first when Tesseract is
-            available on the server. Keep the document worker running (npm run
-            dev:worker) in a second terminal while converting.
-          </p>
-
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
@@ -202,8 +221,8 @@ export function PdfToWordTool() {
               {phase === "uploading"
                 ? "Uploading…"
                 : phase === "processing"
-                  ? "Converting…"
-                  : "Convert to Word"}
+                  ? convertingLabel
+                  : convertLabel}
             </button>
 
             {phase === "done" && completedJobId && (
@@ -212,7 +231,7 @@ export function PdfToWordTool() {
                 onClick={() => void handleDownload()}
                 className="rounded border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background-subtle"
               >
-                Download .docx
+                {downloadLabel}
               </button>
             )}
           </div>
@@ -222,9 +241,7 @@ export function PdfToWordTool() {
           )}
 
           {phase === "done" && (
-            <p className="text-sm text-muted">
-              Conversion complete. Download your editable Word document above.
-            </p>
+            <p className="text-sm text-muted">{successMessage}</p>
           )}
         </section>
       )}
@@ -234,7 +251,89 @@ export function PdfToWordTool() {
           {error}
         </p>
       )}
-
     </div>
+  );
+}
+
+function isPdf(file: File): boolean {
+  return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+}
+
+function isWord(file: File): boolean {
+  const lower = file.name.toLowerCase();
+  return (
+    lower.endsWith(".docx") ||
+    lower.endsWith(".doc") ||
+    file.type ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    file.type === "application/msword"
+  );
+}
+
+export function PdfToWordTool() {
+  return (
+    <ServerConversionTool
+      toolId="pdf-to-word"
+      accept="application/pdf,.pdf"
+      uploadLabel="Select a PDF file"
+      uploadHint="converted on our servers with LibreOffice"
+      validateFile={(file) =>
+        isPdf(file) ? null : "Only PDF files are accepted."
+      }
+      convertLabel="Convert to Word"
+      downloadLabel="Download .docx"
+      successMessage="Conversion complete. Download your editable Word document above."
+    />
+  );
+}
+
+export function PdfToPptTool() {
+  return (
+    <ServerConversionTool
+      toolId="pdf-to-ppt"
+      accept="application/pdf,.pdf"
+      uploadLabel="Select a PDF file"
+      uploadHint="converted on our servers with LibreOffice"
+      validateFile={(file) =>
+        isPdf(file) ? null : "Only PDF files are accepted."
+      }
+      convertLabel="Convert to PowerPoint"
+      downloadLabel="Download .pptx"
+      successMessage="Conversion complete. Download your PowerPoint file above."
+    />
+  );
+}
+
+export function PdfToExcelTool() {
+  return (
+    <ServerConversionTool
+      toolId="pdf-to-excel"
+      accept="application/pdf,.pdf"
+      uploadLabel="Select a PDF file"
+      uploadHint="converted on our servers"
+      validateFile={(file) =>
+        isPdf(file) ? null : "Only PDF files are accepted."
+      }
+      convertLabel="Convert to Excel"
+      downloadLabel="Download .xlsx"
+      successMessage="Conversion complete. Download your Excel spreadsheet above."
+    />
+  );
+}
+
+export function WordToPdfTool() {
+  return (
+    <ServerConversionTool
+      toolId="word-to-pdf"
+      accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      uploadLabel="Select a Word document"
+      uploadHint="converted on our servers with LibreOffice"
+      validateFile={(file) =>
+        isWord(file) ? null : "Only Word documents (.doc, .docx) are accepted."
+      }
+      convertLabel="Convert to PDF"
+      downloadLabel="Download .pdf"
+      successMessage="Conversion complete. Download your PDF above."
+    />
   );
 }

@@ -22,7 +22,7 @@ export async function isScannedPdf(pdfPath: string): Promise<boolean> {
   return textLength < MIN_TEXT_CHARS;
 }
 
-export async function preparePdfForWordConversion(
+export async function prepareSearchablePdf(
   inputPath: string,
   workDir: string,
 ): Promise<OcrPrepareResult> {

@@ -1,7 +1,11 @@
 import { mkdtemp, mkdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { getToolOutput, outputFileNameForTool } from "@convert-hub/shared";
 import { convertPdfToDocx } from "./converters/pdf-to-word.js";
+import { convertPdfToExcel } from "./converters/pdf-to-excel.js";
+import { convertPdfToPptx } from "./converters/pdf-to-ppt.js";
+import { convertWordToPdf } from "./converters/word-to-pdf.js";
 import { getJobRecord, updateJobStatus } from "./db/jobs.js";
 import {
   buildOutputKey,
@@ -9,11 +13,20 @@ import {
   uploadFile,
 } from "./lib/storage.js";
 
-function outputFileName(inputName: string): string {
-  const dot = inputName.lastIndexOf(".");
-  const stem = dot > 0 ? inputName.slice(0, dot) : inputName;
-  return `${stem}.docx`;
-}
+type ConverterFn = (
+  inputPath: string,
+  outputDir: string,
+  workDir: string,
+  onStage?: (label: string) => void,
+) => Promise<string>;
+
+const converters: Record<string, ConverterFn> = {
+  "pdf-to-word": convertPdfToDocx,
+  "pdf-to-ppt": convertPdfToPptx,
+  "pdf-to-excel": convertPdfToExcel,
+  "word-to-pdf": (inputPath, outputDir, _workDir, onStage) =>
+    convertWordToPdf(inputPath, outputDir, onStage),
+};
 
 export async function processJob(jobId: string, tool: string): Promise<void> {
   const job = await getJobRecord(jobId);
@@ -23,6 +36,16 @@ export async function processJob(jobId: string, tool: string): Promise<void> {
 
   if (!job.storage_key) {
     throw new Error("Job is missing an uploaded file.");
+  }
+
+  const converter = converters[tool];
+  if (!converter) {
+    throw new Error(`Unsupported server tool: ${tool}`);
+  }
+
+  const outputMeta = getToolOutput(tool);
+  if (!outputMeta) {
+    throw new Error(`No output metadata configured for tool: ${tool}`);
   }
 
   await updateJobStatus(jobId, "processing", { progress: 5 });
@@ -36,28 +59,17 @@ export async function processJob(jobId: string, tool: string): Promise<void> {
     await mkdir(outputDir, { recursive: true });
     await updateJobStatus(jobId, "processing", { progress: 15 });
 
-    let outputPath: string;
-    switch (tool) {
-      case "pdf-to-word":
-        outputPath = await convertPdfToDocx(inputPath, outputDir, workDir, (label) => {
-          if (label.includes("OCR")) {
-            void updateJobStatus(jobId, "processing", { progress: 35 });
-          }
-        });
-        break;
-      default:
-        throw new Error(`Unsupported server tool: ${tool}`);
-    }
+    const outputPath = await converter(inputPath, outputDir, workDir, (label) => {
+      if (label.includes("OCR")) {
+        void updateJobStatus(jobId, "processing", { progress: 35 });
+      }
+    });
 
     await updateJobStatus(jobId, "processing", { progress: 80 });
 
-    const outputName = outputFileName(job.file_name);
+    const outputName = outputFileNameForTool(job.file_name, tool);
     const outputKey = buildOutputKey(jobId, outputName);
-    await uploadFile(
-      outputKey,
-      outputPath,
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    );
+    await uploadFile(outputKey, outputPath, outputMeta.mimeType);
 
     await updateJobStatus(jobId, "done", {
       progress: 100,
