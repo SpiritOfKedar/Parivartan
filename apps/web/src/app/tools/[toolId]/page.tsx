@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CompressPdfTool } from "../../../components/compress-pdf-tool";
 import { MergePdfTool } from "../../../components/merge-pdf-tool";
+import { PdfToWordTool } from "../../../components/pdf-to-word-tool";
+import { SplitPdfTool } from "../../../components/split-pdf-tool";
 import { UploadZone } from "../../../components/upload-zone";
 import {
   getProcessingNote,
@@ -17,6 +19,7 @@ function acceptForTool(toolId: string): string | undefined {
   switch (toolId) {
     case "merge-pdf":
     case "compress-pdf":
+    case "split-pdf":
     case "pdf-to-word":
       return "application/pdf,.pdf";
     case "compress-image":
@@ -33,6 +36,12 @@ function uploadLabel(toolId: string): string {
     return "Select PDF files";
   }
   if (toolId === "compress-pdf") {
+    return "Select a PDF file";
+  }
+  if (toolId === "split-pdf") {
+    return "Select a PDF file";
+  }
+  if (toolId === "pdf-to-word") {
     return "Select a PDF file";
   }
   return "Select a file";
@@ -80,6 +89,10 @@ export default async function ToolPage({ params }: ToolPageProps) {
           <MergePdfTool />
         ) : toolId === "compress-pdf" ? (
           <CompressPdfTool />
+        ) : toolId === "split-pdf" ? (
+          <SplitPdfTool />
+        ) : toolId === "pdf-to-word" ? (
+          <PdfToWordTool />
         ) : (
           <UploadZone
             accept={acceptForTool(toolId)}

@@ -1,17 +1,6 @@
 import { PDFDocument } from "pdf-lib";
 import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
-import * as pdfjs from "pdfjs-dist";
-
-let workerReady = false;
-
-async function ensurePdfWorker(): Promise<void> {
-  if (workerReady) {
-    return;
-  }
-  const { version } = await import("pdfjs-dist/package.json");
-  pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
-  workerReady = true;
-}
+import { ensurePdfWorker, pdfjs } from "./pdfjs";
 
 export type CompressQualityMode = "preserve" | "balanced" | "smallest";
 

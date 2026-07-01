@@ -18,12 +18,20 @@ export const tools: ToolDefinition[] = [
     clientMaxBytes: 25 * 1024 * 1024,
   },
   {
+    id: "split-pdf",
+    name: "Split PDF",
+    category: "pdf",
+    clientCapable: true,
+    requiresServer: false,
+    clientMaxBytes: 25 * 1024 * 1024,
+  },
+  {
     id: "pdf-to-word",
     name: "PDF to Word",
     category: "office",
-    clientCapable: false,
-    requiresServer: true,
-    clientMaxBytes: 0,
+    clientCapable: true,
+    requiresServer: false,
+    clientMaxBytes: 15 * 1024 * 1024,
   },
   {
     id: "compress-image",

@@ -21,7 +21,10 @@ const descriptions: Record<string, string> = {
   "merge-pdf": "Combine multiple PDF files into a single document.",
   "compress-pdf":
     "Shrink a PDF to a target size. Lossless mode keeps text sharp; balanced mode only re-encodes when needed.",
-  "pdf-to-word": "Convert a PDF to an editable Word document.",
+  "split-pdf":
+    "Separate one page or a whole set into independent PDF files.",
+  "pdf-to-word":
+    "Convert a PDF to Word with table detection and smart layout rebuilding.",
   "compress-image": "Reduce image file size while keeping acceptable quality.",
   "mp4-to-webm": "Convert MP4 video to WebM format.",
 };

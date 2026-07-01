@@ -12,6 +12,8 @@
   "dependencies": {
     "@convert-hub/conversion-rules": "*",
     "@convert-hub/shared": "*",
+    "docx": "^9.7.1",
+    "jszip": "^3.10.1",
     "next": "16.2.9",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.1.200",
