@@ -8,10 +8,12 @@ export type JobStatus =
 export type ProcessingTarget = "client" | "server";
 
 export interface CreateJobRequest {
+  id?: string;
   tool: string;
   fileName: string;
   mimeType: string;
   sizeBytes: number;
+  storageKey?: string;
 }
 
 export interface Job {

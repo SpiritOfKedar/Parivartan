@@ -1,20 +1,22 @@
 import { Router } from "express";
 import { z } from "zod";
 import { routeJob } from "@convert-hub/conversion-rules";
-import type { CreateJobRequest } from "@convert-hub/shared";
 import { isDatabaseConfigured } from "../config/db.js";
 import { isRedisConfigured } from "../config/redis.js";
-import { getJobById, insertJob } from "../db/queries/jobs.js";
+import { isStorageConfigured } from "../config/storage.js";
+import { getJobById, getJobRowById, insertJob } from "../db/queries/jobs.js";
 import { enqueueServerJob } from "../lib/queue.js";
+import { getObjectBytes } from "../lib/storage.js";
 
 export const jobsRouter = Router();
 
 const createJobSchema = z.object({
+  id: z.string().uuid().optional(),
   tool: z.string().min(1),
   fileName: z.string().min(1),
   mimeType: z.string().min(1),
   sizeBytes: z.number().int().positive(),
-  storageKey: z.string().min(1).optional(),
+  storageKey: z.string().min(1),
 });
 
 jobsRouter.post("/", async (req, res, next) => {
@@ -32,14 +34,19 @@ jobsRouter.post("/", async (req, res, next) => {
       return;
     }
 
-    const body = parsed.data as CreateJobRequest & { storageKey?: string };
+    const body = parsed.data;
     const processing = routeJob({
       sizeBytes: body.sizeBytes,
       toolId: body.tool,
     });
 
     const status = processing === "client" ? "client_ready" : "queued";
-    const id = crypto.randomUUID();
+    const id = body.id ?? crypto.randomUUID();
+
+    if (processing === "server" && !body.storageKey) {
+      res.status(400).json({ error: "storageKey is required for server jobs." });
+      return;
+    }
 
     const job = await insertJob({
       id,
@@ -66,6 +73,49 @@ jobsRouter.post("/", async (req, res, next) => {
     }
 
     res.status(201).json({ job });
+  } catch (error) {
+    next(error);
+  }
+});
+
+function outputFileName(inputName: string): string {
+  const dot = inputName.lastIndexOf(".");
+  const stem = dot > 0 ? inputName.slice(0, dot) : inputName;
+  return `${stem}.docx`;
+}
+
+jobsRouter.get("/:id/download", async (req, res, next) => {
+  try {
+    if (!isDatabaseConfigured()) {
+      res.status(503).json({
+        error: "Database not configured. Set DATABASE_URL in apps/api/.env",
+      });
+      return;
+    }
+
+    if (!isStorageConfigured()) {
+      res.status(503).json({ error: "Storage not configured." });
+      return;
+    }
+
+    const job = await getJobRowById(req.params.id);
+    if (!job || job.status !== "done" || !job.output_url) {
+      res.status(404).json({ error: "Converted file not found." });
+      return;
+    }
+
+    const bytes = await getObjectBytes(job.output_url);
+    const fileName = outputFileName(job.file_name);
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${fileName.replace(/"/g, "")}"`,
+    );
+    res.send(Buffer.from(bytes));
   } catch (error) {
     next(error);
   }

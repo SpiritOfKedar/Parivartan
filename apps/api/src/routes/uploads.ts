@@ -1,9 +1,17 @@
 import { Router } from "express";
+import multer from "multer";
 import { z } from "zod";
-import { isStorageConfigured } from "../config/storage.js";
-import { createUploadUrl } from "../lib/storage.js";
+import { getStorageConfig, isStorageConfigured } from "../config/storage.js";
+import { buildObjectKey, createUploadUrl, uploadObject } from "../lib/storage.js";
 
 export const uploadsRouter = Router();
+
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_UPLOAD_BYTES },
+});
 
 const presignSchema = z.object({
   fileName: z.string().min(1).max(255),
@@ -13,6 +21,43 @@ const presignSchema = z.object({
     .int()
     .positive()
     .max(500 * 1024 * 1024), // 500 MB per file cap for now
+});
+
+uploadsRouter.post("/direct", upload.single("file"), async (req, res, next) => {
+  try {
+    if (!isStorageConfigured()) {
+      res.status(503).json({
+        error: "Storage not configured. Set B2_* env vars in apps/api/.env",
+      });
+      return;
+    }
+
+    const file = req.file;
+    if (!file) {
+      res.status(400).json({ error: "No file uploaded." });
+      return;
+    }
+
+    const jobId = crypto.randomUUID();
+    const config = getStorageConfig();
+    const key = buildObjectKey(config.uploadPrefix, jobId, file.originalname);
+
+    await uploadObject({
+      key,
+      body: file.buffer,
+      mimeType: file.mimetype || "application/octet-stream",
+    });
+
+    res.status(201).json({
+      jobId,
+      key,
+      sizeBytes: file.size,
+      fileName: file.originalname,
+      mimeType: file.mimetype,
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 uploadsRouter.post("/presign", async (req, res, next) => {

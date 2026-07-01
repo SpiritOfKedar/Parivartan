@@ -83,3 +83,34 @@ export async function deleteObject(key: string): Promise<void> {
     }),
   );
 }
+
+export async function uploadObject(input: {
+  key: string;
+  body: Buffer | Uint8Array;
+  mimeType: string;
+}): Promise<void> {
+  const { client, config } = getClient();
+  await client.send(
+    new PutObjectCommand({
+      Bucket: config.bucket,
+      Key: input.key,
+      Body: input.body,
+      ContentType: input.mimeType,
+    }),
+  );
+}
+
+export async function getObjectBytes(key: string): Promise<Uint8Array> {
+  const { client, config } = getClient();
+  const response = await client.send(
+    new GetObjectCommand({
+      Bucket: config.bucket,
+      Key: key,
+    }),
+  );
+  const bytes = await response.Body?.transformToByteArray();
+  if (!bytes) {
+    throw new Error("Could not read file from storage.");
+  }
+  return bytes;
+}

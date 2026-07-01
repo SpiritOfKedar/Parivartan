@@ -1,6 +1,6 @@
 import { PDFDocument } from "pdf-lib";
 import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
-import { ensurePdfWorker, pdfjs } from "./pdfjs";
+import { getPdfjs } from "./pdfjs";
 
 export type CompressQualityMode = "preserve" | "balanced" | "smallest";
 
@@ -255,7 +255,7 @@ export async function compressPdfToTarget(
   }
 
   try {
-    await ensurePdfWorker();
+    const pdfjs = await getPdfjs();
 
     onProgress?.({ phase: "loading", current: 0, total: 1 });
     const pdf: PDFDocumentProxy = await pdfjs.getDocument({ data: input }).promise;

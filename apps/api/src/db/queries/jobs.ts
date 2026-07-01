@@ -77,6 +77,14 @@ export async function getJobById(id: string): Promise<Job | null> {
   return row ? rowToJob(row) : null;
 }
 
+export async function getJobRowById(id: string): Promise<JobRow | null> {
+  const result = await getPool().query<JobRow>(
+    "SELECT * FROM jobs WHERE id = $1",
+    [id],
+  );
+  return result.rows[0] ?? null;
+}
+
 export async function updateJobStatus(
   id: string,
   status: JobStatus,

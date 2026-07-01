@@ -29,9 +29,9 @@ export const tools: ToolDefinition[] = [
     id: "pdf-to-word",
     name: "PDF to Word",
     category: "office",
-    clientCapable: true,
-    requiresServer: false,
-    clientMaxBytes: 15 * 1024 * 1024,
+    clientCapable: false,
+    requiresServer: true,
+    clientMaxBytes: 0,
   },
   {
     id: "compress-image",

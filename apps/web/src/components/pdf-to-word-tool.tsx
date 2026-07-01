@@ -1,15 +1,11 @@
 "use client";
 
-import { getTool } from "@convert-hub/conversion-rules";
 import { useRef, useState } from "react";
+import { downloadJobResult, uploadFileAndCreateJob, waitForJob } from "../lib/api-client";
 import { downloadBlob } from "../lib/merge-pdf";
-import {
-  convertPdfToWord,
-  type PdfToWordMode,
-  wordOutputName,
-} from "../lib/pdf-to-word";
+import { baseName } from "../lib/split-pdf";
 
-type Phase = "idle" | "converting" | "done" | "error";
+type Phase = "idle" | "uploading" | "processing" | "done" | "error";
 
 function formatSize(bytes: number): string {
   if (bytes < 1024 * 1024) {
@@ -22,43 +18,16 @@ function isPdf(file: File): boolean {
   return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
 }
 
-const CONVERSION_MODES: {
-  id: PdfToWordMode;
-  label: string;
-  description: string;
-}[] = [
-  {
-    id: "auto",
-    label: "Smart (recommended)",
-    description:
-      "Detects tables and text layout. Uses a page image only when the PDF is scanned or has no structure.",
-  },
-  {
-    id: "text",
-    label: "Editable text and tables",
-    description:
-      "Rebuilds paragraphs and tables from PDF text. Best for marksheets, forms, and reports.",
-  },
-  {
-    id: "visual",
-    label: "Visual layout",
-    description:
-      "Embeds each page as a high-resolution image. Best for scanned documents.",
-  },
-];
-
 export function PdfToWordTool() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [mode, setMode] = useState<PdfToWordMode>("auto");
   const [dragging, setDragging] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
   const [progressLabel, setProgressLabel] = useState<string | null>(null);
-  const [resultBlob, setResultBlob] = useState<Blob | null>(null);
+  const [completedJobId, setCompletedJobId] = useState<string | null>(null);
 
-  const tool = getTool("pdf-to-word");
-  const maxBytes = tool?.clientMaxBytes ?? 15 * 1024 * 1024;
+  const maxBytes = 25 * 1024 * 1024;
 
   function selectFile(incoming: File) {
     if (!isPdf(incoming)) {
@@ -74,7 +43,7 @@ export function PdfToWordTool() {
     }
 
     setFile(incoming);
-    setResultBlob(null);
+    setCompletedJobId(null);
     setError(null);
     setPhase("idle");
     setProgressLabel(null);
@@ -82,7 +51,7 @@ export function PdfToWordTool() {
 
   function clearFile() {
     setFile(null);
-    setResultBlob(null);
+    setCompletedJobId(null);
     setError(null);
     setPhase("idle");
     setProgressLabel(null);
@@ -96,36 +65,56 @@ export function PdfToWordTool() {
       return;
     }
 
-    setPhase("converting");
+    setPhase("uploading");
     setError(null);
-    setResultBlob(null);
-    setProgressLabel("Loading PDF…");
+    setCompletedJobId(null);
+    setProgressLabel("Uploading PDF…");
 
     try {
-      const blob = await convertPdfToWord(file, mode, (progress) => {
-        setProgressLabel(progress.label);
+      const job = await uploadFileAndCreateJob(file, "pdf-to-word");
+      setPhase("processing");
+      setProgressLabel("Converting on server…");
+
+      const finished = await waitForJob(job.id, (update) => {
+        if (update.status === "processing") {
+          setProgressLabel(
+            update.progress > 0
+              ? `Converting on server… ${update.progress}%`
+              : "Converting on server…",
+          );
+        }
       });
-      setResultBlob(blob);
+
+      if (finished.status !== "done") {
+        throw new Error("Conversion did not complete successfully.");
+      }
+
+      setCompletedJobId(finished.id);
       setPhase("done");
       setProgressLabel(null);
     } catch (cause) {
       const message =
-        cause instanceof Error
-          ? cause.message.includes("password") || cause.message.includes("encrypted")
-            ? "This PDF is password-protected. Remove the password and try again."
-            : "Could not convert this PDF. Check that the file is valid."
-          : "Could not convert this PDF.";
+        cause instanceof Error ? cause.message : "Could not convert this PDF.";
       setError(message);
       setPhase("error");
       setProgressLabel(null);
     }
   }
 
-  function handleDownload() {
-    if (!resultBlob || !file) {
+  async function handleDownload() {
+    if (!completedJobId || !file) {
       return;
     }
-    downloadBlob(resultBlob, wordOutputName(file.name));
+
+    try {
+      const blob = await downloadJobResult(completedJobId);
+      downloadBlob(blob, `${baseName(file.name)}.docx`);
+    } catch (cause) {
+      const message =
+        cause instanceof Error ? cause.message : "Download failed.";
+      setError(message);
+      setPhase("error");
+    }
   }
 
   return (
@@ -176,7 +165,7 @@ export function PdfToWordTool() {
         <p className="text-[15px] text-foreground">Select a PDF file</p>
         <p className="mt-1.5 text-sm text-muted">or drag and drop here</p>
         <p className="mt-3 text-xs text-faint">
-          Up to {formatSize(maxBytes)} · processed locally in your browser
+          Up to {formatSize(maxBytes)} · converted on our servers with LibreOffice
         </p>
       </div>
 
@@ -196,54 +185,31 @@ export function PdfToWordTool() {
             </button>
           </div>
 
-          <div>
-            <p className="text-sm font-medium text-foreground">Conversion mode</p>
-            <div className="mt-3 space-y-2">
-              {CONVERSION_MODES.map((option) => (
-                <label
-                  key={option.id}
-                  className={[
-                    "flex cursor-pointer gap-3 rounded border px-4 py-3 transition-colors",
-                    mode === option.id
-                      ? "border-foreground bg-background-subtle"
-                      : "border-border hover:bg-background-subtle",
-                  ].join(" ")}
-                >
-                  <input
-                    type="radio"
-                    name="word-mode"
-                    value={option.id}
-                    checked={mode === option.id}
-                    onChange={() => setMode(option.id)}
-                    className="mt-1"
-                  />
-                  <span>
-                    <span className="text-sm font-medium text-foreground">
-                      {option.label}
-                    </span>
-                    <span className="mt-0.5 block text-sm text-muted">
-                      {option.description}
-                    </span>
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
+          <p className="text-sm text-muted">
+            Your PDF is uploaded to our API, converted with LibreOffice, and deleted
+            within 24 hours. Scanned PDFs are OCR&apos;d first when Tesseract is
+            available on the server. Keep the document worker running (npm run
+            dev:worker) in a second terminal while converting.
+          </p>
 
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={() => void handleConvert()}
-              disabled={phase === "converting"}
+              disabled={phase === "uploading" || phase === "processing"}
               className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40"
             >
-              {phase === "converting" ? "Converting…" : "Convert to Word"}
+              {phase === "uploading"
+                ? "Uploading…"
+                : phase === "processing"
+                  ? "Converting…"
+                  : "Convert to Word"}
             </button>
 
-            {phase === "done" && resultBlob && (
+            {phase === "done" && completedJobId && (
               <button
                 type="button"
-                onClick={handleDownload}
+                onClick={() => void handleDownload()}
                 className="rounded border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background-subtle"
               >
                 Download .docx
@@ -251,14 +217,13 @@ export function PdfToWordTool() {
             )}
           </div>
 
-          {phase === "converting" && progressLabel && (
+          {(phase === "uploading" || phase === "processing") && progressLabel && (
             <p className="text-sm text-muted">{progressLabel}</p>
           )}
 
           {phase === "done" && (
             <p className="text-sm text-muted">
-              Your Word document is ready. Open it in Microsoft Word, Google Docs, or
-              LibreOffice to edit.
+              Conversion complete. Download your editable Word document above.
             </p>
           )}
         </section>
@@ -269,6 +234,7 @@ export function PdfToWordTool() {
           {error}
         </p>
       )}
+
     </div>
   );
 }

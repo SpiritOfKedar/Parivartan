@@ -61,6 +61,7 @@ npm run dev
 | Command | Description |
 |---------|-------------|
 | `npm run dev` | Start web + API in parallel (via Turborepo) |
+| `npm run dev:worker` | Start the document conversion worker |
 | `npm run build` | Build all packages and apps |
 | `npm run typecheck` | Type-check all workspaces |
 | `npm run db:migrate --workspace=@convert-hub/api` | Apply pending SQL migrations to Neon |
@@ -103,6 +104,9 @@ Returns `uploadUrl` — `PUT` the file to that URL with the `Content-Type` heade
 
 ## Next steps
 
-1. Wire BullMQ workers (reuse `UPSTASH_REDIS_URL`)
-2. Connect upload UI (Uppy) to the presign endpoint
-3. Implement first tool end-to-end (e.g. merge PDF)
+1. Install LibreOffice and OCR tools on the machine running `document-worker`:
+   - LibreOffice: `sudo dnf install libreoffice` (Fedora) or `sudo apt install libreoffice` (Debian/Ubuntu)
+   - OCR (for scanned PDFs): `sudo dnf install ocrmypdf tesseract tesseract-langpack-eng`
+2. Run `npm run dev` and `npm run dev:worker` in a second terminal
+3. Set `NEXT_PUBLIC_API_URL` in `apps/web/.env.local` (see `apps/web/.env.example`)
+4. Connect upload UI (Uppy) to the presign endpoint for additional server tools
