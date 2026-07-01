@@ -23,6 +23,20 @@ const descriptions: Record<string, string> = {
     "Shrink a PDF to a target size. Lossless mode keeps text sharp; balanced mode only re-encodes when needed.",
   "split-pdf":
     "Separate one page or a whole set into independent PDF files.",
+  "edit-pdf":
+    "Add text overlays to your PDF pages. Runs locally in your browser.",
+  "watermark-pdf":
+    "Stamp a diagonal text watermark on every page of your PDF.",
+  "rotate-pdf":
+    "Rotate all pages in a PDF by 90°, 180°, or 270°.",
+  "pdf-summarize":
+    "Extract text from a PDF and generate an AI summary using Gemini or NVIDIA NIM.",
+  "pdf-translate":
+    "Extract text from a PDF and translate it with AI. Choose Gemini or NVIDIA NIM.",
+  "protect-pdf":
+    "Password-protect a PDF. Encryption happens locally in your browser.",
+  "page-numbers-pdf":
+    "Add page numbers to the footer of every page in your PDF.",
   "pdf-to-word":
     "Convert a PDF to Word on our servers. Scanned PDFs are OCR'd automatically when possible.",
   "pdf-to-ppt":
@@ -58,6 +72,9 @@ export function getToolsByCategory(): {
 }
 
 export function getProcessingNote(tool: ToolDefinition): string {
+  if (tool.id === "pdf-summarize" || tool.id === "pdf-translate") {
+    return "Text is extracted in your browser, then sent to our API for AI processing.";
+  }
   if (tool.requiresServer) {
     return "Processed on our servers.";
   }

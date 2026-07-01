@@ -7,6 +7,7 @@ import { isRedisConfigured } from "./config/redis.js";
 import { isStorageConfigured } from "./config/storage.js";
 import { runMigrations } from "./db/migrate.js";
 import { jobsRouter } from "./routes/jobs.js";
+import { aiRouter } from "./routes/ai.js";
 import { healthRouter } from "./routes/health.js";
 import { uploadsRouter } from "./routes/uploads.js";
 
@@ -20,6 +21,7 @@ app.use(express.json({ limit: "1mb" }));
 app.use("/health", healthRouter);
 app.use("/api/uploads", uploadsRouter);
 app.use("/api/jobs", jobsRouter);
+app.use("/api/ai", aiRouter);
 
 app.use(
   (

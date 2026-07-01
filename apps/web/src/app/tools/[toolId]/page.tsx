@@ -2,9 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CompressImageTool } from "../../../components/compress-image-tool";
 import { CompressPdfTool } from "../../../components/compress-pdf-tool";
+import { EditPdfTool } from "../../../components/edit-pdf-tool";
 import { JpgToPdfTool } from "../../../components/jpg-to-pdf-tool";
 import { MergePdfTool } from "../../../components/merge-pdf-tool";
+import { PageNumbersPdfTool } from "../../../components/page-numbers-pdf-tool";
+import { PdfSummarizeTool } from "../../../components/pdf-summarize-tool";
 import { PdfToJpgTool } from "../../../components/pdf-to-jpg-tool";
+import { PdfTranslateTool } from "../../../components/pdf-translate-tool";
+import { ProtectPdfTool } from "../../../components/protect-pdf-tool";
+import { RotatePdfTool } from "../../../components/rotate-pdf-tool";
 import {
   PdfToExcelTool,
   PdfToPptTool,
@@ -12,6 +18,7 @@ import {
   WordToPdfTool,
 } from "../../../components/server-conversion-tool";
 import { SplitPdfTool } from "../../../components/split-pdf-tool";
+import { WatermarkPdfTool } from "../../../components/watermark-pdf-tool";
 import { UploadZone } from "../../../components/upload-zone";
 import {
   getProcessingNote,
@@ -23,17 +30,28 @@ interface ToolPageProps {
   params: Promise<{ toolId: string }>;
 }
 
+const PDF_TOOL_IDS = new Set([
+  "merge-pdf",
+  "compress-pdf",
+  "split-pdf",
+  "pdf-to-word",
+  "pdf-to-ppt",
+  "pdf-to-excel",
+  "pdf-to-jpg",
+  "edit-pdf",
+  "watermark-pdf",
+  "rotate-pdf",
+  "pdf-summarize",
+  "pdf-translate",
+  "protect-pdf",
+  "page-numbers-pdf",
+]);
+
 function acceptForTool(toolId: string): string | undefined {
+  if (PDF_TOOL_IDS.has(toolId)) {
+    return "application/pdf,.pdf";
+  }
   switch (toolId) {
-    case "merge-pdf":
-    case "compress-pdf":
-    case "split-pdf":
-    case "pdf-to-word":
-    case "pdf-to-ppt":
-    case "pdf-to-excel":
-      return "application/pdf,.pdf";
-    case "pdf-to-jpg":
-      return "application/pdf,.pdf";
     case "jpg-to-pdf":
       return "image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp";
     case "word-to-pdf":
@@ -48,28 +66,11 @@ function acceptForTool(toolId: string): string | undefined {
 }
 
 function uploadLabel(toolId: string): string {
-  if (toolId === "merge-pdf") {
-    return "Select PDF files";
-  }
-  if (toolId === "jpg-to-pdf") {
-    return "Select image files";
-  }
-  if (toolId === "compress-image") {
-    return "Select an image file";
-  }
-  if (
-    toolId === "compress-pdf" ||
-    toolId === "split-pdf" ||
-    toolId === "pdf-to-word" ||
-    toolId === "pdf-to-ppt" ||
-    toolId === "pdf-to-excel" ||
-    toolId === "pdf-to-jpg"
-  ) {
-    return "Select a PDF file";
-  }
-  if (toolId === "word-to-pdf") {
-    return "Select a Word document";
-  }
+  if (toolId === "merge-pdf") return "Select PDF files";
+  if (toolId === "jpg-to-pdf") return "Select image files";
+  if (toolId === "compress-image") return "Select an image file";
+  if (PDF_TOOL_IDS.has(toolId)) return "Select a PDF file";
+  if (toolId === "word-to-pdf") return "Select a Word document";
   return "Select a file";
 }
 
@@ -103,6 +104,20 @@ export default async function ToolPage({ params }: ToolPageProps) {
         return <CompressImageTool />;
       case "split-pdf":
         return <SplitPdfTool />;
+      case "edit-pdf":
+        return <EditPdfTool />;
+      case "watermark-pdf":
+        return <WatermarkPdfTool />;
+      case "rotate-pdf":
+        return <RotatePdfTool />;
+      case "pdf-summarize":
+        return <PdfSummarizeTool />;
+      case "pdf-translate":
+        return <PdfTranslateTool />;
+      case "protect-pdf":
+        return <ProtectPdfTool />;
+      case "page-numbers-pdf":
+        return <PageNumbersPdfTool />;
       case "pdf-to-word":
         return <PdfToWordTool />;
       case "pdf-to-ppt":

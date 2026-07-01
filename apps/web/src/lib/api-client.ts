@@ -111,3 +111,68 @@ export async function downloadJobResult(jobId: string): Promise<Blob> {
   }
   return response.blob();
 }
+
+export type AiProvider = "gemini" | "nvidia-nim";
+
+interface AiProvidersResponse {
+  providers: AiProvider[];
+}
+
+interface AiResultResponse {
+  result: {
+    text: string;
+    provider: AiProvider;
+    model: string;
+  };
+}
+
+async function postAi<T>(path: string, body: unknown): Promise<T> {
+  try {
+    return await parseJson<T>(
+      await fetch(`${API_URL}${path}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }),
+    );
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error(
+        "Could not reach the API server. Make sure `npm run dev` is running.",
+      );
+    }
+    throw error;
+  }
+}
+
+export async function getAiProviders(): Promise<AiProvider[]> {
+  const data = await parseJson<AiProvidersResponse>(
+    await fetch(`${API_URL}/api/ai/providers`, { cache: "no-store" }),
+  );
+  return data.providers;
+}
+
+export async function summarizePdfText(
+  text: string,
+  provider: AiProvider,
+): Promise<AiResultResponse["result"]> {
+  const data = await postAi<AiResultResponse>("/api/ai/summarize", {
+    text,
+    provider,
+  });
+  return data.result;
+}
+
+export async function translatePdfText(
+  text: string,
+  targetLanguage: string,
+  provider: AiProvider,
+): Promise<AiResultResponse["result"]> {
+  const data = await postAi<AiResultResponse>("/api/ai/translate", {
+    text,
+    targetLanguage,
+    provider,
+  });
+  return data.result;
+}
+
