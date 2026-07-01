@@ -10,6 +10,14 @@ export const tools: ToolDefinition[] = [
     clientMaxBytes: 10 * 1024 * 1024,
   },
   {
+    id: "compress-pdf",
+    name: "Compress PDF",
+    category: "pdf",
+    clientCapable: true,
+    requiresServer: false,
+    clientMaxBytes: 25 * 1024 * 1024,
+  },
+  {
     id: "pdf-to-word",
     name: "PDF to Word",
     category: "office",
