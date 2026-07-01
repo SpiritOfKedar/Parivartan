@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CompressImageTool } from "../../../components/compress-image-tool";
 import { CompressPdfTool } from "../../../components/compress-pdf-tool";
 import { JpgToPdfTool } from "../../../components/jpg-to-pdf-tool";
 import { MergePdfTool } from "../../../components/merge-pdf-tool";
@@ -53,6 +54,9 @@ function uploadLabel(toolId: string): string {
   if (toolId === "jpg-to-pdf") {
     return "Select image files";
   }
+  if (toolId === "compress-image") {
+    return "Select an image file";
+  }
   if (
     toolId === "compress-pdf" ||
     toolId === "split-pdf" ||
@@ -95,6 +99,8 @@ export default async function ToolPage({ params }: ToolPageProps) {
         return <MergePdfTool />;
       case "compress-pdf":
         return <CompressPdfTool />;
+      case "compress-image":
+        return <CompressImageTool />;
       case "split-pdf":
         return <SplitPdfTool />;
       case "pdf-to-word":
