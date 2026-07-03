@@ -1,6 +1,10 @@
 # Convert Hub
 
-Multi-format file conversion platform (PDF, images, audio, video) — monorepo.
+![Under construction — cat in hard hat](docs/under-construction.png)
+
+**Status:** under construction. Some tools work. Some tools work *sometimes*. We're not pretending otherwise.
+
+Multi-format file conversion platform (PDF, images, audio, video). Monorepo because we have commitment issues with single folders.
 
 ## Structure
 
@@ -11,9 +15,9 @@ apps/
 packages/
   shared/       Shared TypeScript types (Job, Tool, etc.)
   conversion-rules/  Client vs server routing per tool
-  conversion-engine/   Portable Node.js PDF/Office conversion (no LibreOffice)
+  conversion-engine/   Node.js PDF/Office conversion (it's a thing we wrote)
 workers/
-  document-worker/   PDF/Office conversions (Node engine, Redis consumer)
+  document-worker/   PDF/Office conversions (Redis consumer)
   media-worker/      FFmpeg jobs (BullMQ consumer)
 infra/
   docker-compose.yml  Reserved for later (not used in local dev)
@@ -26,16 +30,16 @@ infra/
 | Web | **5174** | `apps/web/package.json` dev script |
 | API | **8788** | `PORT` in `apps/api/.env` |
 
-(Avoids 3000/3001 which are often taken on dev machines.)
+(Not 3000/3001 because those are always taken on someone's laptop.)
 
 ## Prerequisites
 
 - Node.js 20+
-- [Neon](https://neon.tech) Postgres project (free tier)
-- [Upstash](https://upstash.com) Redis database (free tier)
+- [Neon](https://neon.tech) Postgres (free tier)
+- [Upstash](https://upstash.com) Redis (free tier)
 - [Backblaze B2](https://www.backblaze.com/b2/cloud-storage.html) bucket (10 GB free tier)
 
-No Docker required for local dev.
+No Docker required for local dev. Unless you want Docker. We're not your boss.
 
 ## Getting started
 
@@ -58,6 +62,8 @@ npm run dev
 - Web: http://localhost:5174
 - API: http://localhost:8788/health
 
+If it doesn't start, check your `.env` files. That's usually the culprit.
+
 ## Scripts
 
 | Command | Description |
@@ -73,7 +79,6 @@ npm run dev
 Raw SQL only — no ORM. Migrations live in `apps/api/db/migrations/` and are tracked in a `schema_migrations` table.
 
 ```bash
-# Apply pending migrations (also runs automatically on API startup)
 npm run db:migrate --workspace=@convert-hub/api
 ```
 
@@ -83,16 +88,16 @@ Set `DATABASE_URL` to your Neon **pooled** connection string in `apps/api/.env`.
 
 ## Queue (Upstash Redis)
 
-Server-side jobs are pushed to `queue:server-jobs` via `ioredis` using the `rediss://` URL from the Upstash console. Set `UPSTASH_REDIS_URL` in `apps/api/.env` — the same URL works for BullMQ workers later.
+Server-side jobs go to `queue:server-jobs` via `ioredis`. Set `UPSTASH_REDIS_URL` in `apps/api/.env`.
 
 ## Storage (Backblaze B2)
 
-Files upload **directly to B2** via presigned URLs — the API never buffers file bytes.
+Files upload to B2 via presigned URLs so the API doesn't have to hold your 40 MB PDF in memory.
 
 1. Create a B2 bucket (note the **region**, e.g. `us-west-004`)
 2. Create an **Application Key** scoped to that bucket (read, write, delete)
 3. Set `B2_KEY_ID`, `B2_APPLICATION_KEY`, `B2_BUCKET`, `B2_REGION` in `apps/api/.env`
-4. In the B2 console, add **lifecycle rules** to auto-delete `incoming/` and `outputs/` after 24h (privacy)
+4. Add lifecycle rules in B2 to auto-delete `incoming/` and `outputs/` after 24h (privacy, and also so we don't pay for your forgotten uploads forever)
 
 **Presign upload**
 
@@ -106,7 +111,9 @@ Returns `uploadUrl` — `PUT` the file to that URL with the `Content-Type` heade
 
 ## Document worker (Office conversions)
 
-Server-side Office tools (PDF→Word/PPT/Excel, Word→PDF) use the **Node conversion engine** in `packages/conversion-engine` — no LibreOffice or system OCR binaries required.
+PDF→Word/PPT/Excel and Word→PDF run in `workers/document-worker` using `packages/conversion-engine`.
+
+**Expectations:** layout fidelity is not great. You get text and slides, not a pixel-perfect clone of your original. Scanned PDFs go through OCR which is slow and occasionally creative with spelling.
 
 ### Local development
 
@@ -114,24 +121,24 @@ Server-side Office tools (PDF→Word/PPT/Excel, Word→PDF) use the **Node conve
 npm run dev:worker
 ```
 
-For **Word → PDF**, Chromium must be available on your machine:
+Word → PDF needs Chromium on your machine:
 
 - Linux: `sudo apt install chromium` or `sudo dnf install chromium`
-- Set `PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium` in `workers/document-worker/.env` if needed
+- Set `PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium` in `workers/document-worker/.env` if Puppeteer can't find it
 
-Optional: `OCR_LANGUAGES=eng` for scanned PDF OCR (uses tesseract.js in-process).
+Optional: `OCR_LANGUAGES=eng` for scanned PDF OCR.
 
-### Docker (recommended for deployment)
+### Docker
 
 ```bash
 docker compose -f infra/docker-compose.yml build document-worker
 docker compose -f infra/docker-compose.yml up document-worker
 ```
 
-The worker image includes Node 20 + Chromium only. Configure `apps/api/.env` (database, Redis, B2) via `env_file` in compose or your platform's secrets.
+Image is Node 20 + Chromium. Configure secrets the same way you'd configure `apps/api/.env`.
 
 ## Next steps
 
-1. Run `npm run dev` and `npm run dev:worker` (or use Docker above)
+1. Run `npm run dev` and optionally `npm run dev:worker`
 2. Set `NEXT_PUBLIC_API_URL` in `apps/web/.env.local` (see `apps/web/.env.example`)
-3. Set `GEMINI_API_KEY` and/or `NVIDIA_NIM_API_KEY` in `apps/api/.env` for AI tools
+3. Set `GEMINI_API_KEY` and/or `NVIDIA_NIM_API_KEY` in `apps/api/.env` if you want the AI tools to do anything
