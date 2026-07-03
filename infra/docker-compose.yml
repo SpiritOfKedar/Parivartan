@@ -1,5 +1,5 @@
-# Reserved for later — not used in local dev yet.
-# Redis + PostgreSQL when you dockerize the stack.
+# Local stack + document worker (optional).
+# Production can use Neon + Upstash instead of postgres/redis services below.
 
 services:
   redis:
@@ -19,6 +19,20 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  document-worker:
+    build:
+      context: ..
+      dockerfile: workers/document-worker/Dockerfile
+    env_file:
+      - ../apps/api/.env
+    environment:
+      CONVERSION_ENGINE: node
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium
+      OCR_LANGUAGES: eng
+    depends_on:
+      - redis
+    restart: unless-stopped
 
 volumes:
   redis_data:

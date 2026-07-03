@@ -1,11 +1,12 @@
 import { extname } from "node:path";
-import { convertWithLibreOffice } from "./libreoffice.js";
+import { runEngineConversion } from "./engine-helpers.js";
 
 const WORD_EXTENSIONS = new Set([".doc", ".docx"]);
 
 export async function convertWordToPdf(
   inputPath: string,
   outputDir: string,
+  _workDir: string,
   onStage?: (label: string) => void,
 ): Promise<string> {
   const ext = extname(inputPath).toLowerCase();
@@ -13,9 +14,11 @@ export async function convertWordToPdf(
     throw new Error("Only Word documents (.doc, .docx) are supported.");
   }
 
-  onStage?.("Converting to PDF with LibreOffice…");
-  return convertWithLibreOffice(inputPath, outputDir, {
-    outputFormat: "pdf",
-    expectedExt: ".pdf",
-  });
+  return runEngineConversion(
+    inputPath,
+    outputDir,
+    ".pdf",
+    (engine, input, options) => engine.docxToPdf(input, options),
+    onStage,
+  );
 }

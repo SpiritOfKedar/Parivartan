@@ -38,13 +38,13 @@ const descriptions: Record<string, string> = {
   "page-numbers-pdf":
     "Add page numbers to the footer of every page in your PDF.",
   "pdf-to-word":
-    "Convert a PDF to Word on our servers. Scanned PDFs are OCR'd automatically when possible.",
+    "Convert a PDF to an editable Word document on our servers. Text-focused output; scanned pages are OCR'd when needed.",
   "pdf-to-ppt":
-    "Convert a PDF to PowerPoint on our servers. Each page becomes a slide.",
+    "Convert a PDF to PowerPoint on our servers. Each page becomes a visual slide.",
   "pdf-to-excel":
-    "Extract tables and structured text from a PDF into Excel. Best for documents with selectable text or tables.",
+    "Extract structured text from a PDF into Excel. Best for documents with selectable text or tables.",
   "word-to-pdf":
-    "Convert a Word document to PDF on our servers with LibreOffice.",
+    "Convert a Word document to PDF on our servers.",
   "jpg-to-pdf":
     "Combine multiple images into one PDF. Reorder pages before creating the file.",
   "pdf-to-jpg":

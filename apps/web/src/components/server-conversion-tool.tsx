@@ -276,7 +276,7 @@ export function PdfToWordTool() {
       toolId="pdf-to-word"
       accept="application/pdf,.pdf"
       uploadLabel="Select a PDF file"
-      uploadHint="converted on our servers with LibreOffice"
+      uploadHint="converted on our servers"
       validateFile={(file) =>
         isPdf(file) ? null : "Only PDF files are accepted."
       }
@@ -293,7 +293,7 @@ export function PdfToPptTool() {
       toolId="pdf-to-ppt"
       accept="application/pdf,.pdf"
       uploadLabel="Select a PDF file"
-      uploadHint="converted on our servers with LibreOffice"
+      uploadHint="converted on our servers"
       validateFile={(file) =>
         isPdf(file) ? null : "Only PDF files are accepted."
       }
@@ -327,7 +327,7 @@ export function WordToPdfTool() {
       toolId="word-to-pdf"
       accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       uploadLabel="Select a Word document"
-      uploadHint="converted on our servers with LibreOffice"
+      uploadHint="converted on our servers"
       validateFile={(file) =>
         isWord(file) ? null : "Only Word documents (.doc, .docx) are accepted."
       }

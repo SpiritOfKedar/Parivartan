@@ -1,3 +1,4 @@
+import { terminateOcrWorker } from "@convert-hub/conversion-engine";
 import { resolve } from "node:path";
 import dotenv from "dotenv";
 import { isDatabaseConfigured } from "./config/db.js";
@@ -56,7 +57,16 @@ async function main() {
   }
 }
 
-main().catch((error) => {
+main().catch(async (error) => {
   console.error("document-worker: fatal error", error);
+  await terminateOcrWorker().catch(() => undefined);
   process.exit(1);
 });
+
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  process.on(signal, () => {
+    void terminateOcrWorker()
+      .catch(() => undefined)
+      .finally(() => process.exit(0));
+  });
+}

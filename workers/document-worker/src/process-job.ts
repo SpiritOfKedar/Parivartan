@@ -24,8 +24,7 @@ const converters: Record<string, ConverterFn> = {
   "pdf-to-word": convertPdfToDocx,
   "pdf-to-ppt": convertPdfToPptx,
   "pdf-to-excel": convertPdfToExcel,
-  "word-to-pdf": (inputPath, outputDir, _workDir, onStage) =>
-    convertWordToPdf(inputPath, outputDir, onStage),
+  "word-to-pdf": convertWordToPdf,
 };
 
 export async function processJob(jobId: string, tool: string): Promise<void> {

@@ -11,8 +11,9 @@ apps/
 packages/
   shared/       Shared TypeScript types (Job, Tool, etc.)
   conversion-rules/  Client vs server routing per tool
+  conversion-engine/   Portable Node.js PDF/Office conversion (no LibreOffice)
 workers/
-  document-worker/   PDF/Office conversions (BullMQ consumer)
+  document-worker/   PDF/Office conversions (Node engine, Redis consumer)
   media-worker/      FFmpeg jobs (BullMQ consumer)
 infra/
   docker-compose.yml  Reserved for later (not used in local dev)
@@ -41,9 +42,10 @@ No Docker required for local dev.
 ```bash
 npm install
 
-# Build shared packages (required before API/web can import them)
+# Build shared packages (required before API/web/worker can import them)
 npm run build --workspace=@convert-hub/shared
 npm run build --workspace=@convert-hub/conversion-rules
+npm run build --workspace=@convert-hub/conversion-engine
 
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
@@ -102,11 +104,34 @@ curl -X POST http://localhost:8788/api/uploads/presign \
 
 Returns `uploadUrl` — `PUT` the file to that URL with the `Content-Type` header.
 
+## Document worker (Office conversions)
+
+Server-side Office tools (PDF→Word/PPT/Excel, Word→PDF) use the **Node conversion engine** in `packages/conversion-engine` — no LibreOffice or system OCR binaries required.
+
+### Local development
+
+```bash
+npm run dev:worker
+```
+
+For **Word → PDF**, Chromium must be available on your machine:
+
+- Linux: `sudo apt install chromium` or `sudo dnf install chromium`
+- Set `PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium` in `workers/document-worker/.env` if needed
+
+Optional: `OCR_LANGUAGES=eng` for scanned PDF OCR (uses tesseract.js in-process).
+
+### Docker (recommended for deployment)
+
+```bash
+docker compose -f infra/docker-compose.yml build document-worker
+docker compose -f infra/docker-compose.yml up document-worker
+```
+
+The worker image includes Node 20 + Chromium only. Configure `apps/api/.env` (database, Redis, B2) via `env_file` in compose or your platform's secrets.
+
 ## Next steps
 
-1. Install LibreOffice and OCR tools on the machine running `document-worker`:
-   - LibreOffice: `sudo dnf install libreoffice` (Fedora) or `sudo apt install libreoffice` (Debian/Ubuntu)
-   - OCR (for scanned PDFs): `sudo dnf install ocrmypdf tesseract tesseract-langpack-eng`
-2. Run `npm run dev` and `npm run dev:worker` in a second terminal
-3. Set `NEXT_PUBLIC_API_URL` in `apps/web/.env.local` (see `apps/web/.env.example`)
-4. Connect upload UI (Uppy) to the presign endpoint for additional server tools
+1. Run `npm run dev` and `npm run dev:worker` (or use Docker above)
+2. Set `NEXT_PUBLIC_API_URL` in `apps/web/.env.local` (see `apps/web/.env.example`)
+3. Set `GEMINI_API_KEY` and/or `NVIDIA_NIM_API_KEY` in `apps/api/.env` for AI tools
