@@ -74,21 +74,17 @@ If it doesn't start, check your `.env` files. That's usually the culprit.
 | `npm run typecheck` | Type-check all workspaces |
 | `npm run db:migrate --workspace=@convert-hub/api` | Apply pending SQL migrations to Neon |
 
-## Database (Neon Postgres)
+## Database
 
-Raw SQL only — no ORM. Migrations live in `apps/api/db/migrations/` and are tracked in a `schema_migrations` table.
+Postgres via Neon. Put your connection string in `DATABASE_URL` in `apps/api/.env`.
 
 ```bash
 npm run db:migrate --workspace=@convert-hub/api
 ```
 
-Add new migrations as numbered files, e.g. `002_users.sql`. Each file runs once inside a transaction.
+## Queue
 
-Set `DATABASE_URL` to your Neon **pooled** connection string in `apps/api/.env`.
-
-## Queue (Upstash Redis)
-
-Server-side jobs go to `queue:server-jobs` via `ioredis`. Set `UPSTASH_REDIS_URL` in `apps/api/.env`.
+Redis via Upstash. Put the URL in `UPSTASH_REDIS_URL` in `apps/api/.env`.
 
 ## Storage (Backblaze B2)
 
