@@ -4,6 +4,7 @@ import { CompressImageTool } from "../../../components/compress-image-tool";
 import { CompressPdfTool } from "../../../components/compress-pdf-tool";
 import { EditPdfTool } from "../../../components/edit-pdf-tool";
 import { JpgToPdfTool } from "../../../components/jpg-to-pdf-tool";
+import { MergeAudioTool } from "../../../components/merge-audio-tool";
 import { MergePdfTool } from "../../../components/merge-pdf-tool";
 import { PageNumbersPdfTool } from "../../../components/page-numbers-pdf-tool";
 import { PdfSummarizeTool } from "../../../components/pdf-summarize-tool";
@@ -58,6 +59,8 @@ function acceptForTool(toolId: string): string | undefined {
       return ".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
     case "compress-image":
       return "image/*";
+    case "merge-audio":
+      return "audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac";
     case "mp4-to-webm":
       return "video/mp4,.mp4";
     default:
@@ -66,6 +69,7 @@ function acceptForTool(toolId: string): string | undefined {
 }
 
 function uploadLabel(toolId: string): string {
+  if (toolId === "merge-audio") return "Select audio files";
   if (toolId === "merge-pdf") return "Select PDF files";
   if (toolId === "jpg-to-pdf") return "Select image files";
   if (toolId === "compress-image") return "Select an image file";
@@ -98,6 +102,8 @@ export default async function ToolPage({ params }: ToolPageProps) {
     switch (toolId) {
       case "merge-pdf":
         return <MergePdfTool />;
+      case "merge-audio":
+        return <MergeAudioTool />;
       case "compress-pdf":
         return <CompressPdfTool />;
       case "compress-image":

@@ -50,6 +50,8 @@ const descriptions: Record<string, string> = {
   "pdf-to-jpg":
     "Export each PDF page as a JPEG image. Multi-page PDFs download as a ZIP archive.",
   "compress-image": "Reduce image file size while keeping acceptable quality.",
+  "merge-audio":
+    "Upload multiple audio files, trim and reorder them, then merge and download as MP3 or WAV. Runs in your browser.",
   "mp4-to-webm": "Convert MP4 video to WebM format.",
 };
 

@@ -145,6 +145,14 @@ export const tools: ToolDefinition[] = [
     requiresServer: true,
     clientMaxBytes: 80 * 1024 * 1024,
   },
+  {
+    id: "merge-audio",
+    name: "Merge Audio",
+    category: "audio",
+    clientCapable: true,
+    requiresServer: false,
+    clientMaxBytes: 50 * 1024 * 1024,
+  },
 ];
 
 const toolMap = new Map(tools.map((tool) => [tool.id, tool]));
