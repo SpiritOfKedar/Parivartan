@@ -1,16 +1,12 @@
 import { Router } from "express";
 import { z } from "zod";
 import { routeJob } from "@convert-hub/conversion-rules";
-import {
-  getToolOutput,
-  IMAGE_SERVER_TOOL_IDS,
-  outputFileNameForTool,
-} from "@convert-hub/shared";
+import { getToolOutput, outputFileNameForTool } from "@convert-hub/shared";
 import { isDatabaseConfigured } from "../config/db.js";
 import { isRedisConfigured } from "../config/redis.js";
 import { isStorageConfigured } from "../config/storage.js";
 import { getJobById, getJobRowById, insertJob } from "../db/queries/jobs.js";
-import { enqueueImageJob, enqueueServerJob } from "../lib/queue.js";
+import { enqueueServerJob } from "../lib/queue.js";
 import { getObjectBytes } from "../lib/storage.js";
 
 export const jobsRouter = Router();
@@ -81,11 +77,7 @@ jobsRouter.post("/", async (req, res, next) => {
         options: body.options,
       };
 
-      if (IMAGE_SERVER_TOOL_IDS.has(job.tool)) {
-        await enqueueImageJob(payload);
-      } else {
-        await enqueueServerJob(payload);
-      }
+      await enqueueServerJob(payload);
     }
 
     res.status(201).json({ job });

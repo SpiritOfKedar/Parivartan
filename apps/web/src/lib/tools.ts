@@ -55,11 +55,11 @@ const descriptions: Record<string, string> = {
   "photo-editor":
     "Crop, rotate, adjust colors, add text, draw, and apply filters. Runs locally in your browser.",
   "upscale-image":
-    "AI upscaling to 2× or 4× resolution on our servers.",
+    "AI super-resolution to 2× or 4× resolution. Runs locally in your browser.",
   "remove-background":
-    "Automatically remove the background and export a transparent PNG.",
+    "Automatically remove the background and export a transparent PNG. Runs locally in your browser.",
   "blur-faces":
-    "Detect and blur faces for privacy. Processed on our servers.",
+    "Detect and blur faces for privacy. Runs locally in your browser.",
   "merge-audio":
     "Upload multiple audio files, trim and reorder them, then merge and download as MP3 or WAV. Runs in your browser.",
   "mp4-to-webm": "Convert MP4 video to WebM format.",

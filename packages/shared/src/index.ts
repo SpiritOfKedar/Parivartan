@@ -75,12 +75,6 @@ export const TOOL_OUTPUTS: Record<string, ToolOutput> = {
   },
 };
 
-export const IMAGE_SERVER_TOOL_IDS = new Set([
-  "upscale-image",
-  "remove-background",
-  "blur-faces",
-]);
-
 export function getToolOutput(toolId: string): ToolOutput | undefined {
   return TOOL_OUTPUTS[toolId];
 }

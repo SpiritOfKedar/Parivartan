@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CompressImageTool } from "../../../components/compress-image-tool";
-import {
-  BlurFacesTool,
-  RemoveBackgroundTool,
-  UpscaleImageTool,
-} from "../../../components/image-server-tools";
+import { BlurFacesTool } from "../../../components/blur-faces-tool";
+import { RemoveBackgroundTool } from "../../../components/remove-background-tool";
+import { UpscaleImageTool } from "../../../components/upscale-image-tool";
 import { PhotoEditorTool } from "../../../components/photo-editor-tool";
 import { ResizeImageTool } from "../../../components/resize-image-tool";
 import { CompressPdfTool } from "../../../components/compress-pdf-tool";

@@ -34,16 +34,6 @@ services:
       - redis
     restart: unless-stopped
 
-  image-worker:
-    build:
-      context: ..
-      dockerfile: workers/image-worker/Dockerfile
-    env_file:
-      - ../apps/api/.env
-    depends_on:
-      - redis
-    restart: unless-stopped
-
 volumes:
   redis_data:
   postgres_data:
