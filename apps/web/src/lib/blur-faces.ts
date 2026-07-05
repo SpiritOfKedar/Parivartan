@@ -1,4 +1,4 @@
-import { FaceDetector, FilesetResolver } from "@mediapipe/tasks-vision";
+import type { FaceDetector } from "@mediapipe/tasks-vision";
 import {
   baseName,
   encodeCanvas,
@@ -9,30 +9,68 @@ import {
 export type BlurStrength = "light" | "medium" | "strong";
 
 const BLUR_RADIUS: Record<BlurStrength, number> = {
-  light: 10,
-  medium: 20,
-  strong: 30,
+  light: 16,
+  medium: 32,
+  strong: 48,
 };
 
-const MEDIAPIPE_WASM_CDN =
-  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm";
-const FACE_DETECTOR_MODEL =
-  "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite";
+const MODEL_LOAD_TIMEOUT_MS = 30_000;
+const MEDIAPIPE_WASM_PATH = "/mediapipe/wasm";
+const FACE_DETECTOR_MODEL = "/models/blaze_face_short_range.tflite";
+
+type MediaPipeVision = typeof import("@mediapipe/tasks-vision");
 
 let detectorPromise: Promise<FaceDetector> | null = null;
 
+function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  message: string,
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(message));
+    }, timeoutMs);
+
+    promise
+      .then((value) => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch((error: unknown) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+  });
+}
+
+async function loadMediaPipeVision(): Promise<MediaPipeVision> {
+  return import("@mediapipe/tasks-vision");
+}
+
+async function createFaceDetector(): Promise<FaceDetector> {
+  const { FaceDetector, FilesetResolver } = await loadMediaPipeVision();
+  const wasmFileset = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_PATH);
+
+  return FaceDetector.createFromOptions(wasmFileset, {
+    baseOptions: {
+      modelAssetPath: FACE_DETECTOR_MODEL,
+    },
+    runningMode: "IMAGE",
+    minDetectionConfidence: 0.4,
+  });
+}
+
 async function getFaceDetector(): Promise<FaceDetector> {
   if (!detectorPromise) {
-    detectorPromise = (async () => {
-      const wasmFileset = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_CDN);
-      return FaceDetector.createFromOptions(wasmFileset, {
-        baseOptions: {
-          modelAssetPath: FACE_DETECTOR_MODEL,
-        },
-        runningMode: "IMAGE",
-        minDetectionConfidence: 0.5,
-      });
-    })();
+    detectorPromise = withTimeout(
+      createFaceDetector(),
+      MODEL_LOAD_TIMEOUT_MS,
+      "Face detection model took too long to load. Check your connection and try again.",
+    ).catch((error: unknown) => {
+      detectorPromise = null;
+      throw error;
+    });
   }
 
   return detectorPromise;
@@ -59,20 +97,29 @@ function blurRegion(
   }
 
   const region = context.getImageData(x1, y1, regionWidth, regionHeight);
-  const scratch = document.createElement("canvas");
-  scratch.width = regionWidth;
-  scratch.height = regionHeight;
-  const scratchContext = scratch.getContext("2d");
-  if (!scratchContext) {
+  const source = document.createElement("canvas");
+  source.width = regionWidth;
+  source.height = regionHeight;
+  const sourceContext = source.getContext("2d");
+  if (!sourceContext) {
     return;
   }
 
-  scratchContext.putImageData(region, 0, 0);
-  scratchContext.filter = `blur(${radius}px)`;
-  scratchContext.drawImage(scratch, 0, 0);
-  scratchContext.filter = "none";
+  sourceContext.putImageData(region, 0, 0);
 
-  context.drawImage(scratch, x1, y1);
+  const blurred = document.createElement("canvas");
+  blurred.width = regionWidth;
+  blurred.height = regionHeight;
+  const blurredContext = blurred.getContext("2d");
+  if (!blurredContext) {
+    return;
+  }
+
+  blurredContext.filter = `blur(${radius}px)`;
+  blurredContext.drawImage(source, 0, 0);
+  blurredContext.filter = "none";
+
+  context.drawImage(blurred, x1, y1);
 }
 
 export interface BlurFacesResult {
@@ -97,7 +144,7 @@ export async function blurFacesInImage(
   context.drawImage(image, 0, 0);
 
   const detector = await getFaceDetector();
-  const result = detector.detect(image);
+  const result = detector.detect(canvas);
   const radius = BLUR_RADIUS[blurStrength];
 
   for (const detection of result.detections) {
