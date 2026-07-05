@@ -1,12 +1,16 @@
 import { Router } from "express";
 import { z } from "zod";
 import { routeJob } from "@convert-hub/conversion-rules";
-import { getToolOutput, outputFileNameForTool } from "@convert-hub/shared";
+import {
+  getToolOutput,
+  IMAGE_SERVER_TOOL_IDS,
+  outputFileNameForTool,
+} from "@convert-hub/shared";
 import { isDatabaseConfigured } from "../config/db.js";
 import { isRedisConfigured } from "../config/redis.js";
 import { isStorageConfigured } from "../config/storage.js";
 import { getJobById, getJobRowById, insertJob } from "../db/queries/jobs.js";
-import { enqueueServerJob } from "../lib/queue.js";
+import { enqueueImageJob, enqueueServerJob } from "../lib/queue.js";
 import { getObjectBytes } from "../lib/storage.js";
 
 export const jobsRouter = Router();
@@ -18,6 +22,7 @@ const createJobSchema = z.object({
   mimeType: z.string().min(1),
   sizeBytes: z.number().int().positive(),
   storageKey: z.string().min(1),
+  options: z.record(z.unknown()).optional(),
 });
 
 jobsRouter.post("/", async (req, res, next) => {
@@ -70,7 +75,17 @@ jobsRouter.post("/", async (req, res, next) => {
         return;
       }
 
-      await enqueueServerJob({ jobId: job.id, tool: job.tool });
+      const payload = {
+        jobId: job.id,
+        tool: job.tool,
+        options: body.options,
+      };
+
+      if (IMAGE_SERVER_TOOL_IDS.has(job.tool)) {
+        await enqueueImageJob(payload);
+      } else {
+        await enqueueServerJob(payload);
+      }
     }
 
     res.status(201).json({ job });

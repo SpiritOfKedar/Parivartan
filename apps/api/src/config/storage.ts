@@ -1,3 +1,9 @@
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { resolveLocalStorageRoot, useLocalStorage } from "@convert-hub/shared/local-storage";
+
+export { useLocalStorage };
+
 function required(name: string): string {
   const value = process.env[name];
   if (!value) {
@@ -6,13 +12,39 @@ function required(name: string): string {
   return value;
 }
 
-export function isStorageConfigured(): boolean {
+export function isB2StorageConfigured(): boolean {
   return Boolean(
     process.env.B2_KEY_ID &&
       process.env.B2_APPLICATION_KEY &&
       process.env.B2_BUCKET &&
       process.env.B2_REGION,
   );
+}
+
+export function isStorageConfigured(): boolean {
+  return useLocalStorage() || isB2StorageConfigured();
+}
+
+export function getLocalStorageRoot(): string {
+  return resolveLocalStorageRoot();
+}
+
+export function resolveLocalStoragePath(key: string): string {
+  return join(getLocalStorageRoot(), key);
+}
+
+export async function writeLocalStorageFile(
+  key: string,
+  body: Buffer | Uint8Array,
+): Promise<void> {
+  const destination = resolveLocalStoragePath(key);
+  await mkdir(dirname(destination), { recursive: true });
+  await writeFile(destination, body);
+}
+
+export async function readLocalStorageFile(key: string): Promise<Uint8Array> {
+  const bytes = await readFile(resolveLocalStoragePath(key));
+  return new Uint8Array(bytes);
 }
 
 export function getStorageConfig() {
@@ -23,13 +55,20 @@ export function getStorageConfig() {
     bucket: required("B2_BUCKET"),
     region,
     endpoint: `https://s3.${region}.backblazeb2.com`,
-    /** Presigned URL lifetime (seconds). Files should also expire via B2 lifecycle rules. */
     presignExpiresIn: Number(process.env.B2_PRESIGN_EXPIRES_IN ?? 3600),
-    /** Prefix for user uploads; set a B2 lifecycle rule to delete after 24h. */
     uploadPrefix: process.env.B2_UPLOAD_PREFIX ?? "incoming",
-    /** Prefix for conversion outputs. */
     outputPrefix: process.env.B2_OUTPUT_PREFIX ?? "outputs",
   };
 }
 
 export type StorageConfig = ReturnType<typeof getStorageConfig>;
+
+export function getStorageBackendLabel(): string {
+  if (useLocalStorage()) {
+    return `local filesystem (${getLocalStorageRoot()})`;
+  }
+  if (isB2StorageConfigured()) {
+    return "Backblaze B2";
+  }
+  return "not configured";
+}

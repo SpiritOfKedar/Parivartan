@@ -9,6 +9,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./local-storage": {
+      "types": "./dist/local-storage.d.ts",
+      "import": "./dist/local-storage.js"
     }
   },
   "scripts": {

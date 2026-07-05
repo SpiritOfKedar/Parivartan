@@ -4,7 +4,7 @@ import express from "express";
 import helmet from "helmet";
 import { isDatabaseConfigured } from "./config/db.js";
 import { isRedisConfigured } from "./config/redis.js";
-import { isStorageConfigured } from "./config/storage.js";
+import { isStorageConfigured, getStorageBackendLabel } from "./config/storage.js";
 import { runMigrations } from "./db/migrate.js";
 import { jobsRouter } from "./routes/jobs.js";
 import { aiRouter } from "./routes/ai.js";
@@ -31,7 +31,17 @@ app.use(
     _next: express.NextFunction,
   ) => {
     console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    const isNetworkError =
+      err instanceof Error &&
+      (("code" in err &&
+        (err.code === "ETIMEDOUT" ||
+          err.code === "EHOSTUNREACH" ||
+          err.code === "ENOTFOUND")) ||
+        err.name === "TimeoutError");
+    const message = isNetworkError
+      ? "Could not reach cloud storage. For local dev, set LOCAL_STORAGE_DIR in apps/api/.env and use docker-compose Redis if Upstash is unreachable."
+      : "Internal server error";
+    res.status(500).json({ error: message });
   },
 );
 
@@ -41,7 +51,9 @@ async function start() {
   }
 
   app.listen(port, () => {
-    const storage = isStorageConfigured() ? "Backblaze B2" : "not configured";
+    const storage = isStorageConfigured()
+      ? getStorageBackendLabel()
+      : "not configured";
     const database = isDatabaseConfigured() ? "Neon Postgres" : "not configured";
     const redis = isRedisConfigured() ? "Upstash Redis" : "not configured";
     console.log(

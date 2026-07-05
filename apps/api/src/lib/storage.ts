@@ -5,7 +5,13 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { getStorageConfig, type StorageConfig } from "../config/storage.js";
+import {
+  getStorageConfig,
+  readLocalStorageFile,
+  type StorageConfig,
+  useLocalStorage,
+  writeLocalStorageFile,
+} from "../config/storage.js";
 
 let client: S3Client | undefined;
 let config: StorageConfig | undefined;
@@ -40,6 +46,10 @@ export async function createUploadUrl(input: {
   fileName: string;
   mimeType: string;
 }): Promise<{ key: string; uploadUrl: string; expiresIn: number }> {
+  if (useLocalStorage()) {
+    throw new Error("Presigned uploads are not supported with LOCAL_STORAGE_DIR.");
+  }
+
   const { client, config } = getClient();
   const key = buildObjectKey(config.uploadPrefix, input.jobId, input.fileName);
 
@@ -60,6 +70,10 @@ export async function createDownloadUrl(key: string): Promise<{
   downloadUrl: string;
   expiresIn: number;
 }> {
+  if (useLocalStorage()) {
+    throw new Error("Presigned downloads are not supported with LOCAL_STORAGE_DIR.");
+  }
+
   const { client, config } = getClient();
 
   const command = new GetObjectCommand({
@@ -75,6 +89,13 @@ export async function createDownloadUrl(key: string): Promise<{
 }
 
 export async function deleteObject(key: string): Promise<void> {
+  if (useLocalStorage()) {
+    const { unlink } = await import("node:fs/promises");
+    const { resolveLocalStoragePath } = await import("../config/storage.js");
+    await unlink(resolveLocalStoragePath(key)).catch(() => undefined);
+    return;
+  }
+
   const { client, config } = getClient();
   await client.send(
     new DeleteObjectCommand({
@@ -89,6 +110,11 @@ export async function uploadObject(input: {
   body: Buffer | Uint8Array;
   mimeType: string;
 }): Promise<void> {
+  if (useLocalStorage()) {
+    await writeLocalStorageFile(input.key, input.body);
+    return;
+  }
+
   const { client, config } = getClient();
   await client.send(
     new PutObjectCommand({
@@ -101,6 +127,10 @@ export async function uploadObject(input: {
 }
 
 export async function getObjectBytes(key: string): Promise<Uint8Array> {
+  if (useLocalStorage()) {
+    return readLocalStorageFile(key);
+  }
+
   const { client, config } = getClient();
   const response = await client.send(
     new GetObjectCommand({

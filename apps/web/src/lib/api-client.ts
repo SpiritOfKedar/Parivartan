@@ -33,6 +33,7 @@ function sleep(ms: number): Promise<void> {
 export async function uploadFileAndCreateJob(
   file: File,
   tool: string,
+  options?: Record<string, unknown>,
 ): Promise<Job> {
   const formData = new FormData();
   formData.append("file", file);
@@ -65,6 +66,7 @@ export async function uploadFileAndCreateJob(
         mimeType: uploaded.mimeType || file.type || "application/pdf",
         sizeBytes: uploaded.sizeBytes || file.size,
         storageKey: uploaded.key,
+        options,
       }),
     }),
   );

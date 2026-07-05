@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CompressImageTool } from "../../../components/compress-image-tool";
+import {
+  BlurFacesTool,
+  RemoveBackgroundTool,
+  UpscaleImageTool,
+} from "../../../components/image-server-tools";
+import { PhotoEditorTool } from "../../../components/photo-editor-tool";
+import { ResizeImageTool } from "../../../components/resize-image-tool";
 import { CompressPdfTool } from "../../../components/compress-pdf-tool";
 import { EditPdfTool } from "../../../components/edit-pdf-tool";
 import { JpgToPdfTool } from "../../../components/jpg-to-pdf-tool";
@@ -59,6 +66,12 @@ function acceptForTool(toolId: string): string | undefined {
       return ".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
     case "compress-image":
       return "image/*";
+    case "resize-image":
+    case "photo-editor":
+    case "upscale-image":
+    case "remove-background":
+    case "blur-faces":
+      return "image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif";
     case "merge-audio":
       return "audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac";
     case "mp4-to-webm":
@@ -73,6 +86,11 @@ function uploadLabel(toolId: string): string {
   if (toolId === "merge-pdf") return "Select PDF files";
   if (toolId === "jpg-to-pdf") return "Select image files";
   if (toolId === "compress-image") return "Select an image file";
+  if (toolId === "resize-image") return "Select an image file";
+  if (toolId === "photo-editor") return "Select an image to edit";
+  if (toolId === "upscale-image") return "Select an image file";
+  if (toolId === "remove-background") return "Select an image file";
+  if (toolId === "blur-faces") return "Select an image file";
   if (PDF_TOOL_IDS.has(toolId)) return "Select a PDF file";
   if (toolId === "word-to-pdf") return "Select a Word document";
   return "Select a file";
@@ -108,6 +126,16 @@ export default async function ToolPage({ params }: ToolPageProps) {
         return <CompressPdfTool />;
       case "compress-image":
         return <CompressImageTool />;
+      case "resize-image":
+        return <ResizeImageTool />;
+      case "photo-editor":
+        return <PhotoEditorTool />;
+      case "upscale-image":
+        return <UpscaleImageTool />;
+      case "remove-background":
+        return <RemoveBackgroundTool />;
+      case "blur-faces":
+        return <BlurFacesTool />;
       case "split-pdf":
         return <SplitPdfTool />;
       case "edit-pdf":

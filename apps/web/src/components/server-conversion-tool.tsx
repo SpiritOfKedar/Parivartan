@@ -1,7 +1,7 @@
 "use client";
 
 import { getToolOutput } from "@convert-hub/shared";
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import {
   downloadJobResult,
   uploadFileAndCreateJob,
@@ -23,6 +23,8 @@ export interface ServerConversionToolProps {
   downloadLabel: string;
   successMessage: string;
   maxBytes?: number;
+  getOptions?: () => Record<string, unknown>;
+  children?: ReactNode;
 }
 
 function formatSize(bytes: number): string {
@@ -43,6 +45,8 @@ export function ServerConversionTool({
   downloadLabel,
   successMessage,
   maxBytes = 25 * 1024 * 1024,
+  getOptions,
+  children,
 }: ServerConversionToolProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -97,7 +101,7 @@ export function ServerConversionTool({
     setProgressLabel("Uploading…");
 
     try {
-      const job = await uploadFileAndCreateJob(file, toolId);
+      const job = await uploadFileAndCreateJob(file, toolId, getOptions?.());
       setPhase("processing");
       setProgressLabel("Converting on server…");
 
@@ -210,6 +214,8 @@ export function ServerConversionTool({
               Remove
             </button>
           </div>
+
+          {children}
 
           <div className="flex flex-wrap items-center gap-3">
             <button

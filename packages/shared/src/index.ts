@@ -61,7 +61,25 @@ export const TOOL_OUTPUTS: Record<string, ToolOutput> = {
     extension: ".pdf",
     mimeType: "application/pdf",
   },
+  "upscale-image": {
+    extension: ".png",
+    mimeType: "image/png",
+  },
+  "remove-background": {
+    extension: ".png",
+    mimeType: "image/png",
+  },
+  "blur-faces": {
+    extension: ".jpg",
+    mimeType: "image/jpeg",
+  },
 };
+
+export const IMAGE_SERVER_TOOL_IDS = new Set([
+  "upscale-image",
+  "remove-background",
+  "blur-faces",
+]);
 
 export function getToolOutput(toolId: string): ToolOutput | undefined {
   return TOOL_OUTPUTS[toolId];

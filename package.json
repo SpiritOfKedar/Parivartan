@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "turbo dev",
     "dev:worker": "npm run dev --workspace=@convert-hub/document-worker",
+    "dev:image-worker": "npm run dev --workspace=@convert-hub/image-worker",
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",

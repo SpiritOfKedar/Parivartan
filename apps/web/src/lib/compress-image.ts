@@ -1,3 +1,13 @@
+import {
+  baseName,
+  encodeCanvas,
+  isSupportedImage,
+  loadImage,
+  outputExtension,
+  outputMimeTypeFor,
+  renderScaledToCanvas,
+} from "./image-io";
+
 export interface CompressImageResult {
   blob: Blob;
   fileName: string;
@@ -7,80 +17,9 @@ export interface CompressImageResult {
   outputMimeType: string;
 }
 
+export { isSupportedImage };
+
 const SCALES = [1, 0.85, 0.7, 0.55, 0.4, 0.3];
-
-function baseName(fileName: string): string {
-  const dot = fileName.lastIndexOf(".");
-  return dot > 0 ? fileName.slice(0, dot) : fileName;
-}
-
-function outputMimeTypeFor(file: File): string {
-  const lower = file.name.toLowerCase();
-  if (file.type === "image/webp" || lower.endsWith(".webp")) {
-    return "image/webp";
-  }
-  return "image/jpeg";
-}
-
-function outputExtension(mimeType: string): string {
-  if (mimeType === "image/webp") {
-    return ".webp";
-  }
-  return ".jpg";
-}
-
-function loadImage(file: File): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const image = new Image();
-    image.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(image);
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("Could not read this image."));
-    };
-    image.src = url;
-  });
-}
-
-function encodeCanvas(
-  canvas: HTMLCanvasElement,
-  mimeType: string,
-  quality: number,
-): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) {
-          reject(new Error("Failed to encode image."));
-          return;
-        }
-        resolve(blob);
-      },
-      mimeType,
-      quality,
-    );
-  });
-}
-
-function renderToCanvas(
-  image: HTMLImageElement,
-  scale: number,
-): HTMLCanvasElement {
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.floor(image.naturalWidth * scale));
-  canvas.height = Math.max(1, Math.floor(image.naturalHeight * scale));
-  const context = canvas.getContext("2d");
-  if (!context) {
-    throw new Error("Could not create canvas context.");
-  }
-  context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = "high";
-  context.drawImage(image, 0, 0, canvas.width, canvas.height);
-  return canvas;
-}
 
 async function encodeAtQuality(
   image: HTMLImageElement,
@@ -88,7 +27,7 @@ async function encodeAtQuality(
   mimeType: string,
   quality: number,
 ): Promise<Blob> {
-  const canvas = renderToCanvas(image, scale);
+  const canvas = renderScaledToCanvas(image, scale);
   return encodeCanvas(canvas, mimeType, quality);
 }
 
@@ -138,18 +77,6 @@ async function bestBlobUnderTarget(
   }
 
   return { blob: bestOverall, reachedTarget: bestOverall.size <= targetBytes };
-}
-
-export function isSupportedImage(file: File): boolean {
-  const lower = file.name.toLowerCase();
-  return (
-    file.type.startsWith("image/") ||
-    lower.endsWith(".jpg") ||
-    lower.endsWith(".jpeg") ||
-    lower.endsWith(".png") ||
-    lower.endsWith(".webp") ||
-    lower.endsWith(".gif")
-  );
 }
 
 export async function compressImageToTarget(

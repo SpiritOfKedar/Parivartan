@@ -8,6 +8,18 @@
   --faint: #9a9a9a;
   --border: #e2e2e2;
   --border-strong: #cccccc;
+  color-scheme: light;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --background-subtle: #141414;
+  --foreground: #ededed;
+  --muted: #a1a1a1;
+  --faint: #737373;
+  --border: #2a2a2a;
+  --border-strong: #404040;
+  color-scheme: dark;
 }
 
 @theme inline {
