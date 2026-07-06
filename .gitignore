@@ -31,3 +31,4 @@ Thumbs.db
 tmp/
 uploads/
 .local/
+apps/web/public/mediapipe/wasm/
