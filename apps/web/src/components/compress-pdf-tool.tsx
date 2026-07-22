@@ -1,38 +1,37 @@
 "use client";
 
-import { getTool } from "@convert-hub/conversion-rules";
 import { useRef, useState } from "react";
 import { compressPdfToTarget, type CompressQualityMode } from "../lib/compress-pdf";
 import { downloadBlob } from "../lib/merge-pdf";
+import { useTranslations } from "../lib/i18n/locale-provider";
 
 type Phase = "idle" | "compressing" | "done" | "error";
 
 const TARGET_PRESETS_KB = [100, 256, 500, 1024] as const;
 
-const QUALITY_MODES: {
+function getQualityModes(messages: ReturnType<typeof useTranslations>): {
   id: CompressQualityMode;
   label: string;
   description: string;
-}[] = [
-  {
-    id: "preserve",
-    label: "Keep text sharp",
-    description:
-      "Lossless optimization only. Text stays selectable. Usually saves 5–20%.",
-  },
-  {
-    id: "balanced",
-    label: "Balanced",
-    description:
-      "Tries lossless first, then high-quality re-encoding only if needed for your target.",
-  },
-  {
-    id: "smallest",
-    label: "Smallest file",
-    description:
-      "Maximum compression. Text may become blurry and unselectable.",
-  },
-];
+}[] {
+  return [
+    {
+      id: "preserve",
+      label: messages.ui.keepTextSharp,
+      description: messages.ui.keepTextSharpDesc,
+    },
+    {
+      id: "balanced",
+      label: messages.ui.balanced,
+      description: messages.ui.balancedDesc,
+    },
+    {
+      id: "smallest",
+      label: messages.ui.smallestFile,
+      description: messages.ui.smallestFileDesc,
+    },
+  ];
+}
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) {
@@ -54,6 +53,8 @@ function baseName(fileName: string): string {
 }
 
 export function CompressPdfTool() {
+  const messages = useTranslations();
+  const qualityModes = getQualityModes(messages);
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [targetKbText, setTargetKbText] = useState("256");
@@ -72,9 +73,6 @@ export function CompressPdfTool() {
     method: "lossless" | "rasterize";
   } | null>(null);
   const [progressLabel, setProgressLabel] = useState<string | null>(null);
-
-  const tool = getTool("compress-pdf");
-  const maxBytes = tool?.clientMaxBytes ?? 25 * 1024 * 1024;
 
   function parseTargetKb(): number {
     const parsed = parseInt(targetKbText, 10);
@@ -106,15 +104,7 @@ export function CompressPdfTool() {
 
   function selectFile(incoming: File) {
     if (!isPdf(incoming)) {
-      setError("Only PDF files are accepted.");
-      setPhase("error");
-      return;
-    }
-
-    if (incoming.size > maxBytes) {
-      setError(
-        `"${incoming.name}" exceeds the ${formatSize(maxBytes)} limit.`,
-      );
+      setError(messages.ui.onlyPdfAccepted);
       setPhase("error");
       return;
     }
@@ -147,7 +137,7 @@ export function CompressPdfTool() {
     const targetKb = normalizeTargetKb();
 
     if (targetKb < 1) {
-      setError("Enter a target size of at least 1 KB.");
+      setError(messages.ui.enterTargetSize);
       setPhase("error");
       return;
     }
@@ -208,8 +198,8 @@ export function CompressPdfTool() {
           ? cause.message.includes("password") ||
               cause.message.includes("encrypted")
             ? "This PDF is password-protected. Remove the password and try again."
-            : "Could not compress this PDF. Check that the file is valid."
-          : "Could not compress this PDF.";
+            : messages.ui.couldNotCompressPdf
+          : messages.ui.couldNotCompressPdf;
       setError(message);
       setPhase("error");
       setProgressLabel(null);
@@ -248,12 +238,8 @@ export function CompressPdfTool() {
             selectFile(dropped);
           }
         }}
-        className={[
-          "cursor-pointer rounded border border-dashed px-6 py-12 text-center transition-colors",
-          dragging
-            ? "border-border-strong bg-background-subtle"
-            : "border-border hover:border-border-strong hover:bg-background-subtle",
-        ].join(" ")}
+        data-dragging={dragging}
+        className="glass-dropzone cursor-pointer px-6 py-12 text-center"
       >
         <input
           ref={inputRef}
@@ -268,10 +254,10 @@ export function CompressPdfTool() {
             event.target.value = "";
           }}
         />
-        <p className="text-[15px] text-foreground">Select a PDF file</p>
-        <p className="mt-1.5 text-sm text-muted">or drag and drop here</p>
+        <p className="text-[15px] text-foreground">{messages.common.selectPdf}</p>
+        <p className="mt-1.5 text-sm text-muted">{messages.common.orDragDrop}</p>
         <p className="mt-3 text-xs text-faint">
-          Up to {formatSize(maxBytes)} · processed locally in your browser
+          {messages.common.processedLocally}
         </p>
       </div>
 
@@ -287,7 +273,7 @@ export function CompressPdfTool() {
               onClick={clearFile}
               className="shrink-0 text-sm text-muted hover:text-foreground"
             >
-              Remove
+              {messages.common.remove}
             </button>
           </div>
 
@@ -359,7 +345,7 @@ export function CompressPdfTool() {
                 <p id="target-kb-hint" className="mt-1.5 text-xs text-faint">
                   {file
                     ? `Must be less than ${formatSize(file.size)} (original file size).`
-                    : "Enter a size in kilobytes."}
+                    : messages.ui.enterSizeKb}
                 </p>
               </div>
             </div>
@@ -372,7 +358,7 @@ export function CompressPdfTool() {
               text-heavy PDFs may require re-encoding.
             </p>
             <div className="mt-3 space-y-2">
-              {QUALITY_MODES.map((mode) => (
+              {qualityModes.map((mode) => (
                 <label
                   key={mode.id}
                   className={[
@@ -408,18 +394,18 @@ export function CompressPdfTool() {
               type="button"
               onClick={handleCompress}
               disabled={phase === "compressing"}
-              className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="btn-primary"
             >
-              {phase === "compressing" ? "Compressing…" : "Compress PDF"}
+              {phase === "compressing" ? messages.ui.compressing : messages.ui.compressPdf}
             </button>
 
             {phase === "done" && resultBlob && (
               <button
                 type="button"
                 onClick={handleDownload}
-                className="rounded border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background-subtle"
+                className="btn-ghost"
               >
-                Download compressed PDF
+                {messages.common.downloadPdf}
               </button>
             )}
           </div>
@@ -481,7 +467,7 @@ export function CompressPdfTool() {
       )}
 
       {error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-red-400" role="alert">
           {error}
         </p>
       )}

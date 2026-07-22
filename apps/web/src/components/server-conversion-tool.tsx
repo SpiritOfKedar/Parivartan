@@ -9,6 +9,7 @@ import {
 } from "../lib/api-client";
 import { downloadBlob } from "../lib/merge-pdf";
 import { baseName } from "../lib/split-pdf";
+import { useTranslations } from "../lib/i18n/locale-provider";
 
 type Phase = "idle" | "uploading" | "processing" | "done" | "error";
 
@@ -22,7 +23,6 @@ export interface ServerConversionToolProps {
   convertingLabel?: string;
   downloadLabel: string;
   successMessage: string;
-  maxBytes?: number;
   getOptions?: () => Record<string, unknown>;
   children?: ReactNode;
 }
@@ -41,13 +41,14 @@ export function ServerConversionTool({
   uploadHint,
   validateFile,
   convertLabel,
-  convertingLabel = "Converting…",
+  convertingLabel,
   downloadLabel,
   successMessage,
-  maxBytes = 25 * 1024 * 1024,
   getOptions,
   children,
 }: ServerConversionToolProps) {
+  const messages = useTranslations();
+  const resolvedConvertingLabel = convertingLabel ?? messages.common.converting;
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -62,12 +63,6 @@ export function ServerConversionTool({
     const validationError = validateFile(incoming);
     if (validationError) {
       setError(validationError);
-      setPhase("error");
-      return;
-    }
-
-    if (incoming.size > maxBytes) {
-      setError(`"${incoming.name}" exceeds the ${formatSize(maxBytes)} limit.`);
       setPhase("error");
       return;
     }
@@ -98,25 +93,25 @@ export function ServerConversionTool({
     setPhase("uploading");
     setError(null);
     setCompletedJobId(null);
-    setProgressLabel("Uploading…");
+    setProgressLabel(messages.ui.uploading);
 
     try {
       const job = await uploadFileAndCreateJob(file, toolId, getOptions?.());
       setPhase("processing");
-      setProgressLabel("Converting on server…");
+      setProgressLabel(messages.ui.convertingOnServer);
 
       const finished = await waitForJob(job.id, (update) => {
         if (update.status === "processing") {
           setProgressLabel(
             update.progress > 0
-              ? `Converting on server… ${update.progress}%`
-              : "Converting on server…",
+              ? `${messages.ui.convertingOnServer} ${update.progress}%`
+              : messages.ui.convertingOnServer,
           );
         }
       });
 
       if (finished.status !== "done") {
-        throw new Error("Conversion did not complete successfully.");
+        throw new Error(messages.ui.conversionFailed);
       }
 
       setCompletedJobId(finished.id);
@@ -124,7 +119,7 @@ export function ServerConversionTool({
       setProgressLabel(null);
     } catch (cause) {
       const message =
-        cause instanceof Error ? cause.message : "Could not convert this file.";
+        cause instanceof Error ? cause.message : messages.ui.couldNotConvertFile;
       setError(message);
       setPhase("error");
       setProgressLabel(null);
@@ -141,7 +136,7 @@ export function ServerConversionTool({
       downloadBlob(blob, `${baseName(file.name)}${outputExtension}`);
     } catch (cause) {
       const message =
-        cause instanceof Error ? cause.message : "Download failed.";
+        cause instanceof Error ? cause.message : messages.ui.downloadFailed;
       setError(message);
       setPhase("error");
     }
@@ -172,12 +167,8 @@ export function ServerConversionTool({
             selectFile(dropped);
           }
         }}
-        className={[
-          "cursor-pointer rounded border border-dashed px-6 py-12 text-center transition-colors",
-          dragging
-            ? "border-border-strong bg-background-subtle"
-            : "border-border hover:border-border-strong hover:bg-background-subtle",
-        ].join(" ")}
+        data-dragging={dragging}
+        className="glass-dropzone cursor-pointer px-6 py-14 text-center"
       >
         <input
           ref={inputRef}
@@ -193,15 +184,13 @@ export function ServerConversionTool({
           }}
         />
         <p className="text-[15px] text-foreground">{uploadLabel}</p>
-        <p className="mt-1.5 text-sm text-muted">or drag and drop here</p>
-        <p className="mt-3 text-xs text-faint">
-          Up to {formatSize(maxBytes)} · {uploadHint}
-        </p>
+        <p className="mt-1.5 text-sm text-muted">{messages.common.orDragDrop}</p>
+        <p className="mt-3 text-xs text-faint">{uploadHint}</p>
       </div>
 
       {file && (
         <section className="space-y-6">
-          <div className="flex items-baseline justify-between gap-4 rounded border border-border bg-background px-4 py-3">
+          <div className="flex items-baseline justify-between gap-4 rounded-xl border border-border bg-[var(--glass-bg)] px-4 py-3 backdrop-blur">
             <div className="min-w-0">
               <p className="truncate text-[15px] text-foreground">{file.name}</p>
               <p className="text-sm text-muted">{formatSize(file.size)}</p>
@@ -209,9 +198,9 @@ export function ServerConversionTool({
             <button
               type="button"
               onClick={clearFile}
-              className="shrink-0 text-sm text-muted hover:text-foreground"
+              className="shrink-0 text-sm text-muted transition-colors hover:text-foreground"
             >
-              Remove
+              {messages.common.remove}
             </button>
           </div>
 
@@ -222,12 +211,12 @@ export function ServerConversionTool({
               type="button"
               onClick={() => void handleConvert()}
               disabled={phase === "uploading" || phase === "processing"}
-              className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="btn-primary"
             >
               {phase === "uploading"
-                ? "Uploading…"
+                ? messages.ui.uploading
                 : phase === "processing"
-                  ? convertingLabel
+                  ? resolvedConvertingLabel
                   : convertLabel}
             </button>
 
@@ -235,7 +224,7 @@ export function ServerConversionTool({
               <button
                 type="button"
                 onClick={() => void handleDownload()}
-                className="rounded border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background-subtle"
+                className="btn-ghost"
               >
                 {downloadLabel}
               </button>
@@ -253,7 +242,7 @@ export function ServerConversionTool({
       )}
 
       {error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-red-400" role="alert">
           {error}
         </p>
       )}
@@ -277,69 +266,73 @@ function isWord(file: File): boolean {
 }
 
 export function PdfToWordTool() {
+  const messages = useTranslations();
   return (
     <ServerConversionTool
       toolId="pdf-to-word"
       accept="application/pdf,.pdf"
-      uploadLabel="Select a PDF file"
-      uploadHint="converted on our servers"
+      uploadLabel={messages.common.selectPdf}
+      uploadHint={messages.notes.server}
       validateFile={(file) =>
-        isPdf(file) ? null : "Only PDF files are accepted."
+        isPdf(file) ? null : messages.ui.onlyPdfAccepted
       }
-      convertLabel="Convert to Word"
-      downloadLabel="Download .docx"
-      successMessage="Conversion complete. Download your editable Word document above."
+      convertLabel={messages.ui.convertToWord}
+      downloadLabel={messages.ui.downloadDocx}
+      successMessage={messages.ui.conversionCompleteWord}
     />
   );
 }
 
 export function PdfToPptTool() {
+  const messages = useTranslations();
   return (
     <ServerConversionTool
       toolId="pdf-to-ppt"
       accept="application/pdf,.pdf"
-      uploadLabel="Select a PDF file"
-      uploadHint="converted on our servers"
+      uploadLabel={messages.common.selectPdf}
+      uploadHint={messages.notes.server}
       validateFile={(file) =>
-        isPdf(file) ? null : "Only PDF files are accepted."
+        isPdf(file) ? null : messages.ui.onlyPdfAccepted
       }
-      convertLabel="Convert to PowerPoint"
-      downloadLabel="Download .pptx"
-      successMessage="Conversion complete. Download your PowerPoint file above."
+      convertLabel={messages.ui.convertToPowerPoint}
+      downloadLabel={messages.ui.downloadPptx}
+      successMessage={messages.ui.conversionCompletePpt}
     />
   );
 }
 
 export function PdfToExcelTool() {
+  const messages = useTranslations();
   return (
     <ServerConversionTool
       toolId="pdf-to-excel"
       accept="application/pdf,.pdf"
-      uploadLabel="Select a PDF file"
-      uploadHint="converted on our servers"
+      uploadLabel={messages.common.selectPdf}
+      uploadHint={messages.notes.server}
       validateFile={(file) =>
-        isPdf(file) ? null : "Only PDF files are accepted."
+        isPdf(file) ? null : messages.ui.onlyPdfAccepted
       }
-      convertLabel="Convert to Excel"
-      downloadLabel="Download .xlsx"
-      successMessage="Conversion complete. Download your Excel spreadsheet above."
+      convertLabel={messages.ui.convertToExcel}
+      downloadLabel={messages.ui.downloadXlsx}
+      successMessage={messages.ui.conversionCompleteExcel}
     />
   );
 }
 
 export function WordToPdfTool() {
+  const messages = useTranslations();
   return (
     <ServerConversionTool
       toolId="word-to-pdf"
       accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-      uploadLabel="Select a Word document"
-      uploadHint="converted on our servers"
+      uploadLabel={messages.common.selectWord}
+      uploadHint={messages.notes.server}
       validateFile={(file) =>
-        isWord(file) ? null : "Only Word documents (.doc, .docx) are accepted."
+        isWord(file) ? null : messages.ui.onlyWordAccepted
       }
-      convertLabel="Convert to PDF"
-      downloadLabel="Download .pdf"
-      successMessage="Conversion complete. Download your PDF above."
+      convertLabel={messages.ui.convertToPdf}
+      downloadLabel={messages.common.downloadPdf}
+      successMessage={messages.ui.conversionCompletePdf}
     />
   );
 }

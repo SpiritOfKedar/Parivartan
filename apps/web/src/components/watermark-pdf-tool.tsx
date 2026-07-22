@@ -1,15 +1,16 @@
 "use client";
 
-import { getTool } from "@convert-hub/conversion-rules";
 import { useRef, useState } from "react";
 import { downloadBlob } from "../lib/merge-pdf";
 import { baseName, formatFileSize, isPdf } from "../lib/pdf-io";
 import { watermarkPdf } from "../lib/watermark-pdf";
 import { PdfToolShell } from "./pdf-tool-shell";
+import { useTranslations } from "../lib/i18n/locale-provider";
 
 type Phase = "idle" | "processing" | "done" | "error";
 
 export function WatermarkPdfTool() {
+  const messages = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [text, setText] = useState("CONFIDENTIAL");
@@ -20,17 +21,9 @@ export function WatermarkPdfTool() {
   const [error, setError] = useState<string | null>(null);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
 
-  const tool = getTool("watermark-pdf");
-  const maxBytes = tool?.clientMaxBytes ?? 25 * 1024 * 1024;
-
   function selectFile(incoming: File) {
     if (!isPdf(incoming)) {
-      setError("Only PDF files are accepted.");
-      setPhase("error");
-      return;
-    }
-    if (incoming.size > maxBytes) {
-      setError(`"${incoming.name}" exceeds the ${formatFileSize(maxBytes)} limit.`);
+      setError(messages.ui.onlyPdfAccepted);
       setPhase("error");
       return;
     }
@@ -50,7 +43,7 @@ export function WatermarkPdfTool() {
       setResultBlob(new Blob([bytes.slice()], { type: "application/pdf" }));
       setPhase("done");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not watermark PDF.");
+      setError(cause instanceof Error ? cause.message : messages.ui.couldNotWatermarkPdf);
       setPhase("error");
     }
   }
@@ -60,14 +53,13 @@ export function WatermarkPdfTool() {
       inputRef={inputRef}
       dragging={dragging}
       setDragging={setDragging}
-      maxBytes={maxBytes}
       onSelect={selectFile}
       file={file}
       onClear={() => { setFile(null); setResultBlob(null); setError(null); setPhase("idle"); if (inputRef.current) inputRef.current.value = ""; }}
       phase={phase}
       error={error}
-      actionLabel="Add watermark"
-      processingLabel="Applying…"
+      actionLabel={messages.ui.addWatermark}
+      processingLabel={messages.common.applying}
       onAction={() => void handleWatermark()}
       onDownload={() => { if (resultBlob && file) downloadBlob(resultBlob, `${baseName(file.name)}-watermarked.pdf`); }}
       resultReady={phase === "done" && !!resultBlob}
@@ -75,11 +67,11 @@ export function WatermarkPdfTool() {
       {file && (
         <div className="space-y-4">
           <label className="block space-y-1 text-sm">
-            <span className="font-medium">Watermark text</span>
+            <span className="font-medium">{messages.ui.watermarkText}</span>
             <input value={text} onChange={(e) => setText(e.target.value)} className="w-full rounded border border-border px-3 py-2" />
           </label>
           <label className="block space-y-1 text-sm">
-            <span className="font-medium">Opacity ({Math.round(opacity * 100)}%)</span>
+            <span className="font-medium">{messages.ui.opacity} ({Math.round(opacity * 100)}%)</span>
             <input type="range" min={0.1} max={0.8} step={0.05} value={opacity} onChange={(e) => setOpacity(Number(e.target.value))} className="w-full" />
           </label>
           <label className="block space-y-1 text-sm">

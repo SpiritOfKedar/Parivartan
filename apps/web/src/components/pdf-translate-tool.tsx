@@ -1,6 +1,5 @@
 "use client";
 
-import { getTool } from "@convert-hub/conversion-rules";
 import { useEffect, useRef, useState } from "react";
 import {
   getAiProviders,
@@ -11,6 +10,7 @@ import { extractPdfText } from "../lib/extract-pdf-text";
 import { downloadBlob } from "../lib/merge-pdf";
 import { baseName, formatFileSize, isPdf } from "../lib/pdf-io";
 import { PdfToolShell } from "./pdf-tool-shell";
+import { useTranslations } from "../lib/i18n/locale-provider";
 
 type Phase = "idle" | "extracting" | "processing" | "done" | "error";
 
@@ -25,6 +25,7 @@ const LANGUAGES = [
 ];
 
 export function PdfTranslateTool() {
+  const messages = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [providers, setProviders] = useState<AiProvider[]>([]);
@@ -37,9 +38,6 @@ export function PdfTranslateTool() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
 
-  const tool = getTool("pdf-translate");
-  const maxBytes = tool?.clientMaxBytes ?? 25 * 1024 * 1024;
-
   useEffect(() => {
     void getAiProviders()
       .then((list) => {
@@ -51,12 +49,7 @@ export function PdfTranslateTool() {
 
   function selectFile(incoming: File) {
     if (!isPdf(incoming)) {
-      setError("Only PDF files are accepted.");
-      setPhase("error");
-      return;
-    }
-    if (incoming.size > maxBytes) {
-      setError(`"${incoming.name}" exceeds the ${formatFileSize(maxBytes)} limit.`);
+      setError(messages.ui.onlyPdfAccepted);
       setPhase("error");
       return;
     }
@@ -88,7 +81,7 @@ export function PdfTranslateTool() {
       setModelUsed(result.model);
       setPhase("done");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Translation failed.");
+      setError(cause instanceof Error ? cause.message : messages.ui.translationFailed);
       setPhase("error");
     }
   }
@@ -104,24 +97,23 @@ export function PdfTranslateTool() {
         inputRef={inputRef}
         dragging={dragging}
         setDragging={setDragging}
-        maxBytes={maxBytes}
-        onSelect={selectFile}
+                onSelect={selectFile}
         file={file}
         onClear={() => { setFile(null); setTranslation(""); setError(null); setPhase("idle"); if (inputRef.current) inputRef.current.value = ""; }}
         phase={phase === "extracting" || phase === "processing" ? "processing" : phase === "done" ? "done" : phase === "error" ? "error" : "idle"}
         error={null}
-        actionLabel="Translate PDF"
-        processingLabel={phase === "extracting" ? "Extracting text…" : "Translating…"}
+        actionLabel={messages.ui.translatePdf}
+        processingLabel={phase === "extracting" ? messages.ui.extractingText : messages.ui.translating}
         onAction={() => void handleTranslate()}
         onDownload={downloadTranslation}
         resultReady={phase === "done" && !!translation}
-        downloadLabel="Download translation"
+        downloadLabel={messages.ui.downloadTranslation}
       >
         {file && (
           <div className="flex flex-wrap gap-4">
             {providers.length > 0 && (
               <label className="space-y-1 text-sm">
-                <span className="font-medium">AI provider</span>
+                <span className="font-medium">{messages.ui.provider}</span>
                 <select value={provider} onChange={(e) => setProvider(e.target.value as AiProvider)} className="block rounded border border-border px-2 py-1">
                   {providers.map((p) => (
                     <option key={p} value={p}>{PROVIDER_LABELS[p]}</option>
@@ -130,7 +122,7 @@ export function PdfTranslateTool() {
               </label>
             )}
             <label className="space-y-1 text-sm">
-              <span className="font-medium">Target language</span>
+              <span className="font-medium">{messages.ui.targetLanguage}</span>
               <select value={targetLanguage} onChange={(e) => setTargetLanguage(e.target.value)} className="block rounded border border-border px-2 py-1">
                 {LANGUAGES.map((lang) => (
                   <option key={lang} value={lang}>{lang}</option>
@@ -158,7 +150,7 @@ export function PdfTranslateTool() {
         </section>
       )}
 
-      {error && <p className="text-sm text-red-700" role="alert">{error}</p>}
+      {error && <p className="text-sm text-red-400" role="alert">{error}</p>}
     </div>
   );
 }

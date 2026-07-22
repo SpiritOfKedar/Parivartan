@@ -1,6 +1,5 @@
 "use client";
 
-import { getTool } from "@convert-hub/conversion-rules";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import type { ImageOutputFormat } from "../lib/image-io";
@@ -17,6 +16,7 @@ import type {
   EditorTool,
   PhotoEditorCanvasHandle,
 } from "./photo-editor-canvas";
+import { useTranslations } from "../lib/i18n/locale-provider";
 
 const PhotoEditorCanvas = dynamic(
   () =>
@@ -57,6 +57,7 @@ function formatSize(bytes: number): string {
 }
 
 export function PhotoEditorTool() {
+  const messages = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<PhotoEditorCanvasHandle>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -69,7 +70,7 @@ export function PhotoEditorTool() {
   const [adjustments, setAdjustments] =
     useState<PhotoAdjustments>(DEFAULT_ADJUSTMENTS);
   const [filterPreset, setFilterPreset] = useState<FilterPreset>("none");
-  const [textValue, setTextValue] = useState("Your text");
+  const [textValue, setTextValue] = useState(messages.ui.yourText);
   const [textColor, setTextColor] = useState("#ffffff");
   const [textSize, setTextSize] = useState(24);
   const [brushColor, setBrushColor] = useState("#ff0000");
@@ -77,9 +78,6 @@ export function PhotoEditorTool() {
   const [format, setFormat] = useState<ImageOutputFormat>("jpeg");
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const toolDef = getTool("photo-editor");
-  const maxBytes = toolDef?.clientMaxBytes ?? 25 * 1024 * 1024;
 
   useEffect(() => {
     return () => {
@@ -97,12 +95,7 @@ export function PhotoEditorTool() {
 
   function selectFile(incoming: File) {
     if (!isSupportedImage(incoming)) {
-      setError("Only image files are accepted (JPEG, PNG, WebP, GIF).");
-      return;
-    }
-
-    if (incoming.size > maxBytes) {
-      setError(`"${incoming.name}" exceeds the ${formatSize(maxBytes)} limit.`);
+      setError(messages.ui.onlyImagesAccepted);
       return;
     }
 
@@ -156,7 +149,7 @@ export function PhotoEditorTool() {
       downloadBlob(result.blob, result.fileName);
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : "Could not export this image.",
+        cause instanceof Error ? cause.message : messages.ui.couldNotExportImage,
       );
     }
   }
@@ -190,12 +183,8 @@ export function PhotoEditorTool() {
             selectFile(dropped);
           }
         }}
-        className={[
-          "cursor-pointer rounded border border-dashed px-6 py-12 text-center transition-colors",
-          dragging
-            ? "border-border-strong bg-background-subtle"
-            : "border-border hover:border-border-strong hover:bg-background-subtle",
-        ].join(" ")}
+        data-dragging={dragging}
+        className="glass-dropzone cursor-pointer px-6 py-12 text-center"
       >
         <input
           ref={inputRef}
@@ -210,10 +199,10 @@ export function PhotoEditorTool() {
             event.target.value = "";
           }}
         />
-        <p className="text-[15px] text-foreground">Select an image to edit</p>
-        <p className="mt-1.5 text-sm text-muted">or drag and drop here</p>
+        <p className="text-[15px] text-foreground">{messages.common.selectImageToEdit}</p>
+        <p className="mt-1.5 text-sm text-muted">{messages.common.orDragDrop}</p>
         <p className="mt-3 text-xs text-faint">
-          JPEG, PNG, WebP, GIF · up to {formatSize(maxBytes)} · processed locally
+          JPEG, PNG, WebP, GIF · processed locally
         </p>
       </div>
 
@@ -231,7 +220,7 @@ export function PhotoEditorTool() {
               onClick={clearFile}
               className="shrink-0 text-sm text-muted hover:text-foreground"
             >
-              Remove
+              {messages.common.remove}
             </button>
           </div>
 
@@ -414,7 +403,7 @@ export function PhotoEditorTool() {
               )}
 
               <div className="space-y-2">
-                <p className="text-sm font-medium text-foreground">Export format</p>
+                <p className="text-sm font-medium text-foreground">{messages.ui.format}</p>
                 <div className="flex flex-wrap gap-2">
                   {(["jpeg", "png", "webp"] as const).map((value) => (
                     <button
@@ -439,15 +428,15 @@ export function PhotoEditorTool() {
           <button
             type="button"
             onClick={() => void handleExport()}
-            className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
+            className="btn-primary"
           >
-            Download edited image
+            {messages.ui.exportImage}
           </button>
         </section>
       )}
 
       {error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-red-400" role="alert">
           {error}
         </p>
       )}

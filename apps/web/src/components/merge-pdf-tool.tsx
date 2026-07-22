@@ -1,8 +1,8 @@
 "use client";
 
-import { getTool } from "@convert-hub/conversion-rules";
 import { useRef, useState } from "react";
 import { downloadBlob, mergePdfFiles } from "../lib/merge-pdf";
+import { useTranslations } from "../lib/i18n/locale-provider";
 
 type Phase = "idle" | "merging" | "done" | "error";
 
@@ -18,6 +18,7 @@ function isPdf(file: File): boolean {
 }
 
 export function MergePdfTool() {
+  const messages = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [dragging, setDragging] = useState(false);
@@ -25,31 +26,19 @@ export function MergePdfTool() {
   const [error, setError] = useState<string | null>(null);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
 
-  const tool = getTool("merge-pdf");
-  const maxBytes = tool?.clientMaxBytes ?? 10 * 1024 * 1024;
-
   function addFiles(incoming: FileList | File[]) {
     const list = Array.from(incoming);
     const pdfs = list.filter(isPdf);
     const rejected = list.length - pdfs.length;
 
     if (rejected > 0) {
-      setError("Only PDF files are accepted.");
+      setError(messages.ui.onlyPdfAccepted);
       setPhase("error");
     } else {
       setError(null);
       if (phase === "error") {
         setPhase("idle");
       }
-    }
-
-    const oversized = pdfs.find((file) => file.size > maxBytes);
-    if (oversized) {
-      setError(
-        `"${oversized.name}" exceeds the ${formatSize(maxBytes)} limit per file.`,
-      );
-      setPhase("error");
-      return;
     }
 
     setFiles((current) => [...current, ...pdfs]);
@@ -92,7 +81,7 @@ export function MergePdfTool() {
 
   async function handleMerge() {
     if (files.length < 2) {
-      setError("Select at least two PDF files to merge.");
+      setError(messages.ui.selectAtLeastTwoPdfs);
       setPhase("error");
       return;
     }
@@ -110,8 +99,8 @@ export function MergePdfTool() {
         cause instanceof Error
           ? cause.message.includes("encrypted")
             ? "One of the PDFs is password-protected. Remove the password and try again."
-            : "Could not merge these PDFs. Check that each file is valid."
-          : "Could not merge these PDFs.";
+            : messages.ui.couldNotMergePdfs
+          : messages.ui.couldNotMergePdfs;
       setError(message);
       setPhase("error");
     }
@@ -148,12 +137,8 @@ export function MergePdfTool() {
             addFiles(event.dataTransfer.files);
           }
         }}
-        className={[
-          "cursor-pointer rounded border border-dashed px-6 py-12 text-center transition-colors",
-          dragging
-            ? "border-border-strong bg-background-subtle"
-            : "border-border hover:border-border-strong hover:bg-background-subtle",
-        ].join(" ")}
+        data-dragging={dragging}
+        className="glass-dropzone cursor-pointer px-6 py-12 text-center"
       >
         <input
           ref={inputRef}
@@ -168,10 +153,10 @@ export function MergePdfTool() {
             }
           }}
         />
-        <p className="text-[15px] text-foreground">Select PDF files</p>
-        <p className="mt-1.5 text-sm text-muted">or drag and drop here</p>
+        <p className="text-[15px] text-foreground">{messages.common.selectPdfs}</p>
+        <p className="mt-1.5 text-sm text-muted">{messages.common.orDragDrop}</p>
         <p className="mt-3 text-xs text-faint">
-          Up to {formatSize(maxBytes)} per file · processed locally in your browser
+          {messages.common.processedLocally}
         </p>
       </div>
 
@@ -227,7 +212,7 @@ export function MergePdfTool() {
                     onClick={() => removeFile(index)}
                     className="px-2 py-1 text-sm text-muted hover:text-foreground"
                   >
-                    Remove
+                    {messages.common.remove}
                   </button>
                 </div>
               </li>
@@ -239,18 +224,18 @@ export function MergePdfTool() {
               type="button"
               onClick={handleMerge}
               disabled={phase === "merging" || files.length < 2}
-              className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="btn-primary"
             >
-              {phase === "merging" ? "Merging…" : "Merge PDFs"}
+              {phase === "merging" ? messages.ui.merging : messages.ui.mergePdfs}
             </button>
 
             {phase === "done" && resultBlob && (
               <button
                 type="button"
                 onClick={handleDownload}
-                className="rounded border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background-subtle"
+                className="btn-ghost"
               >
-                Download merged.pdf
+                {messages.common.downloadPdf}
               </button>
             )}
           </div>
@@ -262,7 +247,7 @@ export function MergePdfTool() {
       )}
 
       {error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-red-400" role="alert">
           {error}
         </p>
       )}

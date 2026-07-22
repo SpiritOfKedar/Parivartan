@@ -1,11 +1,23 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CategoryIcon } from "../../../components/category-icon";
+import {
+  getCategoryTheme,
+  type CategoryId,
+} from "../../../lib/category-theme";
 import { CompressImageTool } from "../../../components/compress-image-tool";
 import { BlurFacesTool } from "../../../components/blur-faces-tool";
+import { ConvertFromJpgTool } from "../../../components/convert-from-jpg-tool";
+import { ConvertToJpgTool } from "../../../components/convert-to-jpg-tool";
+import { CropImageTool } from "../../../components/crop-image-tool";
+import { HtmlToImageTool } from "../../../components/html-to-image-tool";
+import { MemeGeneratorTool } from "../../../components/meme-generator-tool";
 import { RemoveBackgroundTool } from "../../../components/remove-background-tool";
+import { RotateImageTool } from "../../../components/rotate-image-tool";
 import { UpscaleImageTool } from "../../../components/upscale-image-tool";
 import { PhotoEditorTool } from "../../../components/photo-editor-tool";
 import { ResizeImageTool } from "../../../components/resize-image-tool";
+import { WatermarkImageTool } from "../../../components/watermark-image-tool";
 import { CompressPdfTool } from "../../../components/compress-pdf-tool";
 import { EditPdfTool } from "../../../components/edit-pdf-tool";
 import { JpgToPdfTool } from "../../../components/jpg-to-pdf-tool";
@@ -27,9 +39,14 @@ import { SplitPdfTool } from "../../../components/split-pdf-tool";
 import { WatermarkPdfTool } from "../../../components/watermark-pdf-tool";
 import { UploadZone } from "../../../components/upload-zone";
 import {
+  getDictionary,
+  getToolCopy,
+} from "../../../lib/i18n";
+import { getRequestLocale } from "../../../lib/i18n/request-locale";
+import {
   getProcessingNote,
   getTool,
-  getToolDescription,
+  getUploadLabel,
 } from "../../../lib/tools";
 
 interface ToolPageProps {
@@ -64,10 +81,18 @@ function acceptForTool(toolId: string): string | undefined {
       return ".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
     case "compress-image":
       return "image/*";
+    case "convert-to-jpg":
+      return "image/*";
+    case "convert-from-jpg":
+      return "image/jpeg,.jpg,.jpeg";
     case "resize-image":
+    case "crop-image":
     case "photo-editor":
     case "upscale-image":
     case "remove-background":
+    case "watermark-image":
+    case "meme-generator":
+    case "rotate-image":
     case "blur-faces":
       return "image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif";
     case "merge-audio":
@@ -79,36 +104,25 @@ function acceptForTool(toolId: string): string | undefined {
   }
 }
 
-function uploadLabel(toolId: string): string {
-  if (toolId === "merge-audio") return "Select audio files";
-  if (toolId === "merge-pdf") return "Select PDF files";
-  if (toolId === "jpg-to-pdf") return "Select image files";
-  if (toolId === "compress-image") return "Select an image file";
-  if (toolId === "resize-image") return "Select an image file";
-  if (toolId === "photo-editor") return "Select an image to edit";
-  if (toolId === "upscale-image") return "Select an image file";
-  if (toolId === "remove-background") return "Select an image file";
-  if (toolId === "blur-faces") return "Select an image file";
-  if (PDF_TOOL_IDS.has(toolId)) return "Select a PDF file";
-  if (toolId === "word-to-pdf") return "Select a Word document";
-  return "Select a file";
-}
-
 export async function generateMetadata({ params }: ToolPageProps) {
   const { toolId } = await params;
   const tool = getTool(toolId);
+  const locale = await getRequestLocale();
   if (!tool) {
-    return { title: "Tool not found" };
+    return { title: getDictionary(locale).meta.toolNotFound };
   }
+  const copy = getToolCopy(locale, toolId);
   return {
-    title: tool.name,
-    description: getToolDescription(toolId),
+    title: copy.name,
+    description: copy.description,
   };
 }
 
 export default async function ToolPage({ params }: ToolPageProps) {
   const { toolId } = await params;
   const tool = getTool(toolId);
+  const locale = await getRequestLocale();
+  const messages = getDictionary(locale);
 
   if (!tool) {
     notFound();
@@ -126,12 +140,26 @@ export default async function ToolPage({ params }: ToolPageProps) {
         return <CompressImageTool />;
       case "resize-image":
         return <ResizeImageTool />;
+      case "crop-image":
+        return <CropImageTool />;
+      case "convert-to-jpg":
+        return <ConvertToJpgTool />;
+      case "convert-from-jpg":
+        return <ConvertFromJpgTool />;
       case "photo-editor":
         return <PhotoEditorTool />;
       case "upscale-image":
         return <UpscaleImageTool />;
       case "remove-background":
         return <RemoveBackgroundTool />;
+      case "watermark-image":
+        return <WatermarkImageTool />;
+      case "meme-generator":
+        return <MemeGeneratorTool />;
+      case "rotate-image":
+        return <RotateImageTool />;
+      case "html-to-image":
+        return <HtmlToImageTool />;
       case "blur-faces":
         return <BlurFacesTool />;
       case "split-pdf":
@@ -167,30 +195,57 @@ export default async function ToolPage({ params }: ToolPageProps) {
           <UploadZone
             accept={acceptForTool(toolId)}
             multiple={false}
-            label={uploadLabel(toolId)}
+            label={getUploadLabel(toolId, locale)}
           />
         );
     }
   }
 
-  return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
-      <Link
-        href="/"
-        className="inline-flex items-center rounded border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-background-subtle"
-      >
-        ← All tools
-      </Link>
+  const category = tool.category as CategoryId;
+  const theme = getCategoryTheme(category);
+  const copy = getToolCopy(locale, toolId);
 
-      <div className="mt-6 max-w-xl">
-        <h1 className="text-2xl font-semibold tracking-tight">{tool.name}</h1>
-        <p className="mt-2 text-[15px] text-muted">
-          {getToolDescription(toolId)}
-        </p>
-        <p className="mt-1 text-sm text-faint">{getProcessingNote(tool)}</p>
+  return (
+    <main
+      className="mx-auto w-full max-w-3xl flex-1 animate-rise px-6 pb-14 pt-24"
+      style={{
+        ["--accent" as string]: theme.accentVar,
+        ["--accent-soft" as string]: theme.accentSoftVar,
+      }}
+    >
+      <div className="flex items-center gap-2 text-sm text-faint">
+        <Link href="/" className="btn-ghost !px-3 !py-1.5 !text-sm">
+          <span aria-hidden="true">←</span> {messages.common.backToTools}
+        </Link>
+        <span aria-hidden="true">/</span>
+        <Link
+          href={`/#${category}`}
+          className="transition-colors hover:text-foreground"
+        >
+          {messages.categories[category].label}
+        </Link>
       </div>
 
-      <div className="mt-10">{renderTool()}</div>
+      <div className="mt-8 flex items-start gap-4">
+        <span
+          className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-border text-[color:var(--accent)]"
+          style={{ background: "var(--accent-soft)" }}
+        >
+          <CategoryIcon category={category} className="size-6" />
+        </span>
+        <div className="min-w-0">
+          <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight text-foreground">
+            {copy.name}
+          </h1>
+          <p className="mt-1.5 text-[15px] text-muted">{copy.description}</p>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <span className="chip">{getProcessingNote(tool, locale)}</span>
+      </div>
+
+      <div className="glass-panel mt-8 p-6 sm:p-8">{renderTool()}</div>
     </main>
   );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { getTool } from "@convert-hub/conversion-rules";
 import { useEffect, useRef, useState } from "react";
 import { isSupportedImage } from "../lib/image-io";
 import { downloadBlob } from "../lib/merge-pdf";
@@ -8,6 +7,7 @@ import {
   removeImageBackground,
   type RemoveBackgroundResult,
 } from "../lib/remove-background";
+import { useTranslations } from "../lib/i18n/locale-provider";
 
 type Phase = "idle" | "processing" | "done" | "error";
 
@@ -22,6 +22,7 @@ function formatSize(bytes: number): string {
 }
 
 export function RemoveBackgroundTool() {
+  const messages = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -30,9 +31,6 @@ export function RemoveBackgroundTool() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RemoveBackgroundResult | null>(null);
-
-  const tool = getTool("remove-background");
-  const maxBytes = tool?.clientMaxBytes ?? 25 * 1024 * 1024;
 
   useEffect(() => {
     return () => {
@@ -50,13 +48,7 @@ export function RemoveBackgroundTool() {
 
   function selectFile(incoming: File) {
     if (!isSupportedImage(incoming)) {
-      setError("Only image files are accepted (JPEG, PNG, WebP, GIF).");
-      setPhase("error");
-      return;
-    }
-
-    if (incoming.size > maxBytes) {
-      setError(`"${incoming.name}" exceeds the ${formatSize(maxBytes)} limit.`);
+      setError(messages.ui.onlyImagesAccepted);
       setPhase("error");
       return;
     }
@@ -91,7 +83,7 @@ export function RemoveBackgroundTool() {
     setPhase("processing");
     setError(null);
     setResult(null);
-    setStatusMessage("Loading background removal model…");
+    setStatusMessage(messages.ui.loadingBgModel);
 
     try {
       const output = await removeImageBackground(file, (message, current, total) => {
@@ -102,13 +94,13 @@ export function RemoveBackgroundTool() {
         }
       });
       setResult(output);
-      setStatusMessage("Background removed. Download your transparent PNG above.");
+      setStatusMessage(messages.ui.backgroundRemoved);
       setPhase("done");
     } catch (cause) {
       setError(
         cause instanceof Error
           ? cause.message
-          : "Could not remove the background from this image.",
+          : messages.ui.couldNotRemoveBg,
       );
       setPhase("error");
     }
@@ -146,12 +138,8 @@ export function RemoveBackgroundTool() {
             selectFile(dropped);
           }
         }}
-        className={[
-          "cursor-pointer rounded border border-dashed px-6 py-12 text-center transition-colors",
-          dragging
-            ? "border-border-strong bg-background-subtle"
-            : "border-border hover:border-border-strong hover:bg-background-subtle",
-        ].join(" ")}
+        data-dragging={dragging}
+        className="glass-dropzone cursor-pointer px-6 py-12 text-center"
       >
         <input
           ref={inputRef}
@@ -166,10 +154,10 @@ export function RemoveBackgroundTool() {
             event.target.value = "";
           }}
         />
-        <p className="text-[15px] text-foreground">Select an image file</p>
-        <p className="mt-1.5 text-sm text-muted">or drag and drop here</p>
+        <p className="text-[15px] text-foreground">{messages.common.selectImage}</p>
+        <p className="mt-1.5 text-sm text-muted">{messages.common.orDragDrop}</p>
         <p className="mt-3 text-xs text-faint">
-          JPEG, PNG, WebP, GIF · up to {formatSize(maxBytes)} · processed locally
+          JPEG, PNG, WebP, GIF · processed locally
         </p>
       </div>
 
@@ -192,7 +180,7 @@ export function RemoveBackgroundTool() {
               onClick={clearFile}
               className="shrink-0 text-sm text-muted hover:text-foreground"
             >
-              Remove
+              {messages.common.remove}
             </button>
           </div>
 
@@ -201,18 +189,18 @@ export function RemoveBackgroundTool() {
               type="button"
               onClick={() => void handleRemoveBackground()}
               disabled={phase === "processing"}
-              className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="btn-primary"
             >
-              {phase === "processing" ? "Removing background…" : "Remove background"}
+              {phase === "processing" ? messages.ui.removingBackground : messages.ui.removeBackground}
             </button>
 
             {phase === "done" && result && (
               <button
                 type="button"
                 onClick={handleDownload}
-                className="rounded border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background-subtle"
+                className="btn-ghost"
               >
-                Download PNG
+                {messages.common.download}
               </button>
             )}
           </div>
@@ -227,7 +215,7 @@ export function RemoveBackgroundTool() {
       )}
 
       {error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-red-400" role="alert">
           {error}
         </p>
       )}

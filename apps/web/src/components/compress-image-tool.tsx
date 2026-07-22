@@ -1,9 +1,9 @@
 "use client";
 
-import { getTool } from "@convert-hub/conversion-rules";
 import { useRef, useState } from "react";
 import { compressImageToTarget, isSupportedImage } from "../lib/compress-image";
 import { downloadBlob } from "../lib/merge-pdf";
+import { useTranslations } from "../lib/i18n/locale-provider";
 
 type Phase = "idle" | "compressing" | "done" | "error";
 
@@ -20,6 +20,7 @@ function formatSize(bytes: number): string {
 }
 
 export function CompressImageTool() {
+  const messages = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -34,9 +35,6 @@ export function CompressImageTool() {
     compressedBytes: number;
     reachedTarget: boolean;
   } | null>(null);
-
-  const tool = getTool("compress-image");
-  const maxBytes = tool?.clientMaxBytes ?? 15 * 1024 * 1024;
 
   function parseTargetKb(): number {
     const parsed = parseInt(targetKbText, 10);
@@ -74,13 +72,7 @@ export function CompressImageTool() {
 
   function selectFile(incoming: File) {
     if (!isSupportedImage(incoming)) {
-      setError("Only image files are accepted (JPEG, PNG, WebP, GIF).");
-      setPhase("error");
-      return;
-    }
-
-    if (incoming.size > maxBytes) {
-      setError(`"${incoming.name}" exceeds the ${formatSize(maxBytes)} limit.`);
+      setError(messages.ui.onlyImagesAccepted);
       setPhase("error");
       return;
     }
@@ -123,7 +115,7 @@ export function CompressImageTool() {
 
     const targetKb = normalizeTargetKb();
     if (targetKb < 1) {
-      setError("Enter a target size of at least 1 KB.");
+      setError(messages.ui.enterTargetSize);
       setPhase("error");
       return;
     }
@@ -146,7 +138,7 @@ export function CompressImageTool() {
       setPhase("done");
     } catch (cause) {
       const message =
-        cause instanceof Error ? cause.message : "Could not compress this image.";
+        cause instanceof Error ? cause.message : messages.ui.couldNotCompressImage;
       setError(message);
       setPhase("error");
     }
@@ -184,12 +176,8 @@ export function CompressImageTool() {
             selectFile(dropped);
           }
         }}
-        className={[
-          "cursor-pointer rounded border border-dashed px-6 py-12 text-center transition-colors",
-          dragging
-            ? "border-border-strong bg-background-subtle"
-            : "border-border hover:border-border-strong hover:bg-background-subtle",
-        ].join(" ")}
+        data-dragging={dragging}
+        className="glass-dropzone cursor-pointer px-6 py-12 text-center"
       >
         <input
           ref={inputRef}
@@ -204,10 +192,10 @@ export function CompressImageTool() {
             event.target.value = "";
           }}
         />
-        <p className="text-[15px] text-foreground">Select an image file</p>
-        <p className="mt-1.5 text-sm text-muted">or drag and drop here</p>
+        <p className="text-[15px] text-foreground">{messages.common.selectImage}</p>
+        <p className="mt-1.5 text-sm text-muted">{messages.common.orDragDrop}</p>
         <p className="mt-3 text-xs text-faint">
-          JPEG, PNG, WebP, GIF · up to {formatSize(maxBytes)} · processed locally
+          JPEG, PNG, WebP, GIF · processed locally
         </p>
       </div>
 
@@ -230,13 +218,13 @@ export function CompressImageTool() {
               onClick={clearFile}
               className="shrink-0 text-sm text-muted hover:text-foreground"
             >
-              Remove
+              {messages.common.remove}
             </button>
           </div>
 
           <div className="space-y-3">
             <label className="block text-sm font-medium text-foreground">
-              Target file size (KB)
+              {messages.ui.targetSizeKb}
             </label>
             <div className="flex flex-wrap items-center gap-2">
               <input
@@ -266,18 +254,18 @@ export function CompressImageTool() {
               type="button"
               onClick={() => void handleCompress()}
               disabled={phase === "compressing"}
-              className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="btn-primary"
             >
-              {phase === "compressing" ? "Compressing…" : "Compress image"}
+              {phase === "compressing" ? messages.ui.compressing : messages.ui.compressImage}
             </button>
 
             {phase === "done" && resultBlob && (
               <button
                 type="button"
                 onClick={handleDownload}
-                className="rounded border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background-subtle"
+                className="btn-ghost"
               >
-                Download
+                {messages.common.download}
               </button>
             )}
           </div>
@@ -295,7 +283,7 @@ export function CompressImageTool() {
       )}
 
       {error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-red-400" role="alert">
           {error}
         </p>
       )}

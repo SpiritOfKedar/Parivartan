@@ -1,9 +1,9 @@
 "use client";
 
-import { getTool } from "@convert-hub/conversion-rules";
 import { useEffect, useRef, useState } from "react";
 import { imagesToPdf, isSupportedImage } from "../lib/jpg-to-pdf";
 import { downloadBlob } from "../lib/merge-pdf";
+import { useTranslations } from "../lib/i18n/locale-provider";
 
 type Phase = "idle" | "building" | "done" | "error";
 
@@ -25,6 +25,7 @@ function totalBytes(entries: ImageEntry[]): number {
 }
 
 export function JpgToPdfTool() {
+  const messages = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const [entries, setEntries] = useState<ImageEntry[]>([]);
   const [dragging, setDragging] = useState(false);
@@ -32,9 +33,6 @@ export function JpgToPdfTool() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
-
-  const tool = getTool("jpg-to-pdf");
-  const maxBytes = tool?.clientMaxBytes ?? 25 * 1024 * 1024;
 
   useEffect(() => {
     return () => {
@@ -50,7 +48,7 @@ export function JpgToPdfTool() {
     const rejected = list.length - images.length;
 
     if (rejected > 0) {
-      setError("Only JPEG, PNG, and WebP images are accepted.");
+      setError(messages.ui.onlyImagesAccepted);
       setPhase("error");
     } else {
       setError(null);
@@ -69,17 +67,7 @@ export function JpgToPdfTool() {
       previewUrl: URL.createObjectURL(file),
     }));
 
-    const combined = [...entries, ...newEntries];
-    if (totalBytes(combined) > maxBytes) {
-      for (const entry of newEntries) {
-        URL.revokeObjectURL(entry.previewUrl);
-      }
-      setError(`Total size exceeds the ${formatSize(maxBytes)} limit.`);
-      setPhase("error");
-      return;
-    }
-
-    setEntries(combined);
+    setEntries([...entries, ...newEntries]);
     setResultBlob(null);
     if (phase === "done") {
       setPhase("idle");
@@ -145,7 +133,7 @@ export function JpgToPdfTool() {
 
   async function handleCreate() {
     if (entries.length === 0) {
-      setError("Add at least one image.");
+      setError(messages.ui.addAtLeastOneImage);
       setPhase("error");
       return;
     }
@@ -160,7 +148,7 @@ export function JpgToPdfTool() {
       setPhase("done");
     } catch (cause) {
       const message =
-        cause instanceof Error ? cause.message : "Could not create PDF.";
+        cause instanceof Error ? cause.message : messages.ui.couldNotCreatePdf;
       setError(message);
       setPhase("error");
     }
@@ -198,12 +186,8 @@ export function JpgToPdfTool() {
             addFiles(event.dataTransfer.files);
           }
         }}
-        className={[
-          "cursor-pointer rounded border border-dashed px-6 py-12 text-center transition-colors",
-          dragging
-            ? "border-border-strong bg-background-subtle"
-            : "border-border hover:border-border-strong hover:bg-background-subtle",
-        ].join(" ")}
+        data-dragging={dragging}
+        className="glass-dropzone cursor-pointer px-6 py-12 text-center"
       >
         <input
           ref={inputRef}
@@ -218,10 +202,10 @@ export function JpgToPdfTool() {
             }
           }}
         />
-        <p className="text-[15px] text-foreground">Select image files</p>
-        <p className="mt-1.5 text-sm text-muted">or drag and drop here</p>
+        <p className="text-[15px] text-foreground">{messages.common.selectImages}</p>
+        <p className="mt-1.5 text-sm text-muted">{messages.common.orDragDrop}</p>
         <p className="mt-3 text-xs text-faint">
-          JPEG, PNG, WebP · up to {formatSize(maxBytes)} total · processed locally
+          JPEG, PNG, WebP · processed locally
         </p>
       </div>
 
@@ -305,7 +289,7 @@ export function JpgToPdfTool() {
                     onClick={() => removeEntry(index)}
                     className="px-2 py-1 text-sm text-muted hover:text-foreground"
                   >
-                    Remove
+                    {messages.common.remove}
                   </button>
                 </div>
               </li>
@@ -317,18 +301,18 @@ export function JpgToPdfTool() {
               type="button"
               onClick={() => void handleCreate()}
               disabled={phase === "building"}
-              className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="btn-primary"
             >
-              {phase === "building" ? "Creating PDF…" : "Create PDF"}
+              {phase === "building" ? messages.ui.creatingPdf : messages.ui.createPdf}
             </button>
 
             {phase === "done" && resultBlob && (
               <button
                 type="button"
                 onClick={handleDownload}
-                className="rounded border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background-subtle"
+                className="btn-ghost"
               >
-                Download PDF
+                {messages.common.downloadPdf}
               </button>
             )}
           </div>
@@ -336,7 +320,7 @@ export function JpgToPdfTool() {
       )}
 
       {error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-red-400" role="alert">
           {error}
         </p>
       )}

@@ -1,42 +1,381 @@
 @import "tailwindcss";
 
+/*
+  Cinematic dark glass system.
+  Palette anchored on the meadow hero: sky-blue + meadow-green heroes,
+  with clay + amber accents for the remaining categories.
+*/
 :root {
-  --background: #ffffff;
-  --background-subtle: #f7f7f7;
-  --foreground: #1a1a1a;
-  --muted: #6b6b6b;
-  --faint: #9a9a9a;
-  --border: #e2e2e2;
-  --border-strong: #cccccc;
-  color-scheme: light;
-}
-
-.dark {
-  --background: #0a0a0a;
-  --background-subtle: #141414;
-  --foreground: #ededed;
-  --muted: #a1a1a1;
-  --faint: #737373;
-  --border: #2a2a2a;
-  --border-strong: #404040;
   color-scheme: dark;
+
+  /* Base cinematic surface */
+  --background: #07090c;
+  --background-elevated: #0c0f14;
+  --background-subtle: #10141b;
+  --foreground: #f4f6fa;
+  --muted: #a7b0bd;
+  --faint: #6b7480;
+
+  /* Glass */
+  --glass-bg: rgba(255, 255, 255, 0.045);
+  --glass-bg-strong: rgba(255, 255, 255, 0.07);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-highlight: rgba(255, 255, 255, 0.16);
+  --glass-shadow: 0 24px 60px -28px rgba(0, 0, 0, 0.9);
+  --blur: 18px;
+
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.18);
+
+  /* Category accents (filmic, muted) */
+  --accent-image: #5ab2e6;
+  --accent-image-soft: rgba(90, 178, 230, 0.16);
+  --accent-pdf: #d97a68;
+  --accent-pdf-soft: rgba(217, 122, 104, 0.16);
+  --accent-video: #e0a94a;
+  --accent-video-soft: rgba(224, 169, 74, 0.16);
+  --accent-audio: #5fbf8a;
+  --accent-audio-soft: rgba(95, 191, 138, 0.16);
+  --accent-office: #8fa2b8;
+  --accent-office-soft: rgba(143, 162, 184, 0.16);
+
+  /* Active accent (overridden per section/tool via inline style) */
+  --accent: var(--accent-image);
+  --accent-soft: var(--accent-image-soft);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-background-elevated: var(--background-elevated);
   --color-background-subtle: var(--background-subtle);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-faint: var(--faint);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+
+  --font-sans: var(--font-jakarta), var(--font-devanagari), system-ui,
+    -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: var(--font-syne), var(--font-devanagari), system-ui,
     sans-serif;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background: var(--background);
+  position: relative;
+  min-height: 100%;
+  background: transparent;
   color: var(--foreground);
   font-family: var(--font-sans);
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Fixed meadow image behind every route / section */
+.site-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.site-backdrop__media {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.site-backdrop__image {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: 100vw;
+  width: 100svh;
+  max-width: none;
+  transform: translate(-50%, -50%) rotate(-90deg);
+  object-fit: cover;
+  filter: saturate(1.05) contrast(1.02);
+}
+
+.site-backdrop__scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(7, 9, 12, 0.35) 0%,
+      rgba(7, 9, 12, 0.45) 35%,
+      rgba(7, 9, 12, 0.72) 70%,
+      rgba(7, 9, 12, 0.88) 100%
+    );
+}
+
+.site-backdrop__vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      90% 70% at 50% 20%,
+      transparent 20%,
+      rgba(7, 9, 12, 0.55) 100%
+    );
+}
+
+.site-backdrop__grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Keep legacy class as a no-op so older references don't break */
+.atmosphere {
+  display: none;
+}
+
+@layer components {
+  .glass-panel {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 1rem;
+    backdrop-filter: blur(var(--blur)) saturate(140%);
+    -webkit-backdrop-filter: blur(var(--blur)) saturate(140%);
+    box-shadow:
+      var(--glass-shadow),
+      inset 0 1px 0 0 var(--glass-highlight);
+  }
+
+  .glass-panel-strong {
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border);
+    border-radius: 1.25rem;
+    backdrop-filter: blur(calc(var(--blur) + 6px)) saturate(150%);
+    -webkit-backdrop-filter: blur(calc(var(--blur) + 6px)) saturate(150%);
+    box-shadow:
+      var(--glass-shadow),
+      inset 0 1px 0 0 var(--glass-highlight);
+  }
+
+  /* Navbar: frosted glass with enough dark tint for white text over bright clouds */
+  .glass-nav {
+    background: rgba(6, 10, 16, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    box-shadow:
+      0 14px 44px -18px rgba(0, 0, 0, 0.65),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
+  }
+
+  .glass-nav a,
+  .glass-nav input,
+  .glass-nav button {
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
+  }
+
+  .glass-nav input {
+    background: rgba(0, 0, 0, 0.35) !important;
+    border-color: rgba(255, 255, 255, 0.28) !important;
+    color: #fff !important;
+  }
+
+  .glass-nav input::placeholder {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+
+  .glass-dropzone {
+    position: relative;
+    border-radius: 1rem;
+    border: 1px dashed var(--border-strong);
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur)) saturate(140%);
+    -webkit-backdrop-filter: blur(var(--blur)) saturate(140%);
+    transition:
+      border-color 0.2s ease,
+      background 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .glass-dropzone:hover,
+  .glass-dropzone[data-dragging="true"] {
+    border-color: var(--accent);
+    background: var(--glass-bg-strong);
+    box-shadow:
+      0 0 0 1px var(--accent-soft),
+      0 22px 50px -30px var(--accent);
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.7rem;
+    padding: 0.6rem 1.1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #06121a;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--accent) 100%, white 12%),
+      var(--accent)
+    );
+    border: 1px solid color-mix(in srgb, var(--accent) 70%, white 20%);
+    box-shadow:
+      0 10px 30px -12px var(--accent),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.35);
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.2s ease,
+      opacity 0.2s ease;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 16px 40px -14px var(--accent),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.4);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.4;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.7rem;
+    padding: 0.6rem 1.1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--foreground);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease,
+      transform 0.15s ease;
+  }
+
+  .btn-ghost:hover {
+    background: var(--glass-bg-strong);
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+  }
+
+  .accent-glow {
+    box-shadow: 0 0 0 1px var(--accent-soft), 0 30px 70px -40px var(--accent);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 999px;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--foreground);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.15s ease;
+  }
+
+  .chip:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-rise {
+  animation: rise 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Scroll-triggered reveals */
+.reveal {
+  opacity: 0;
+  filter: blur(6px);
+  transition:
+    opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform, filter;
+}
+
+.reveal--up {
+  transform: translateY(36px);
+}
+
+.reveal--fade {
+  transform: none;
+}
+
+.reveal--scale {
+  transform: scale(0.96) translateY(18px);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  filter: blur(0);
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-rise {
+    animation: none;
+  }
+  .reveal {
+    opacity: 1;
+    filter: none;
+    transform: none;
+    transition: none;
+  }
+  .btn-primary,
+  .btn-ghost,
+  .chip,
+  .glass-dropzone {
+    transition: none;
+  }
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--foreground);
 }

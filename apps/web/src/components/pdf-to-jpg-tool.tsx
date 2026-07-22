@@ -1,8 +1,8 @@
 "use client";
 
-import { getTool } from "@convert-hub/conversion-rules";
 import { useRef, useState } from "react";
 import { downloadBlob } from "../lib/merge-pdf";
+import { useTranslations } from "../lib/i18n/locale-provider";
 import {
   convertPdfToJpg,
   getPdfPageCount,
@@ -23,6 +23,7 @@ function isPdf(file: File): boolean {
 }
 
 export function PdfToJpgTool() {
+  const messages = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [pageCount, setPageCount] = useState<number | null>(null);
@@ -33,18 +34,9 @@ export function PdfToJpgTool() {
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
   const [resultFileName, setResultFileName] = useState<string | null>(null);
 
-  const tool = getTool("pdf-to-jpg");
-  const maxBytes = tool?.clientMaxBytes ?? 25 * 1024 * 1024;
-
   async function selectFile(incoming: File) {
     if (!isPdf(incoming)) {
-      setError("Only PDF files are accepted.");
-      setPhase("error");
-      return;
-    }
-
-    if (incoming.size > maxBytes) {
-      setError(`"${incoming.name}" exceeds the ${formatSize(maxBytes)} limit.`);
+      setError(messages.ui.onlyPdfAccepted);
       setPhase("error");
       return;
     }
@@ -61,7 +53,7 @@ export function PdfToJpgTool() {
       setPhase("idle");
     } catch {
       setPageCount(null);
-      setError("Could not read this PDF.");
+      setError(messages.ui.couldNotReadPdf);
       setPhase("error");
     }
   }
@@ -96,7 +88,7 @@ export function PdfToJpgTool() {
       setPhase("done");
     } catch (cause) {
       const message =
-        cause instanceof Error ? cause.message : "Could not convert this PDF.";
+        cause instanceof Error ? cause.message : messages.ui.couldNotConvertPdf;
       setError(message);
       setPhase("error");
     }
@@ -134,12 +126,8 @@ export function PdfToJpgTool() {
             void selectFile(dropped);
           }
         }}
-        className={[
-          "cursor-pointer rounded border border-dashed px-6 py-12 text-center transition-colors",
-          dragging
-            ? "border-border-strong bg-background-subtle"
-            : "border-border hover:border-border-strong hover:bg-background-subtle",
-        ].join(" ")}
+        data-dragging={dragging}
+        className="glass-dropzone cursor-pointer px-6 py-12 text-center"
       >
         <input
           ref={inputRef}
@@ -154,10 +142,10 @@ export function PdfToJpgTool() {
             event.target.value = "";
           }}
         />
-        <p className="text-[15px] text-foreground">Select a PDF file</p>
-        <p className="mt-1.5 text-sm text-muted">or drag and drop here</p>
+        <p className="text-[15px] text-foreground">{messages.common.selectPdf}</p>
+        <p className="mt-1.5 text-sm text-muted">{messages.common.orDragDrop}</p>
         <p className="mt-3 text-xs text-faint">
-          Up to {formatSize(maxBytes)} · processed locally in your browser
+          {messages.common.processedLocally}
         </p>
       </div>
 
@@ -176,13 +164,13 @@ export function PdfToJpgTool() {
               onClick={clearFile}
               className="shrink-0 text-sm text-muted hover:text-foreground"
             >
-              Remove
+              {messages.common.remove}
             </button>
           </div>
 
           <fieldset className="space-y-2">
             <legend className="text-sm font-medium text-foreground">
-              JPEG quality
+              {messages.ui.quality}
             </legend>
             <div className="flex flex-wrap gap-4 text-sm">
               <label className="flex items-center gap-2">
@@ -211,18 +199,18 @@ export function PdfToJpgTool() {
               type="button"
               onClick={() => void handleConvert()}
               disabled={phase === "loading" || phase === "converting"}
-              className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="btn-primary"
             >
-              {phase === "converting" ? "Converting…" : "Convert to JPG"}
+              {phase === "converting" ? messages.common.converting : messages.ui.convertToJpg}
             </button>
 
             {phase === "done" && resultBlob && (
               <button
                 type="button"
                 onClick={handleDownload}
-                className="rounded border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background-subtle"
+                className="btn-ghost"
               >
-                {pageCount === 1 ? "Download .jpg" : "Download ZIP"}
+                {pageCount === 1 ? messages.common.download : messages.ui.downloadZip}
               </button>
             )}
           </div>
@@ -236,7 +224,7 @@ export function PdfToJpgTool() {
       )}
 
       {error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-red-400" role="alert">
           {error}
         </p>
       )}

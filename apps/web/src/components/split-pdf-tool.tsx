@@ -1,8 +1,8 @@
 "use client";
 
-import { getTool } from "@convert-hub/conversion-rules";
 import { useRef, useState } from "react";
 import { downloadBlob } from "../lib/merge-pdf";
+import { useTranslations } from "../lib/i18n/locale-provider";
 import {
   baseName,
   getPdfPageCount,
@@ -24,25 +24,33 @@ function isPdf(file: File): boolean {
   return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
 }
 
-const SPLIT_MODES: { id: SplitMode; label: string; description: string }[] = [
-  {
-    id: "each-page",
-    label: "Every page separately",
-    description: "Create one PDF per page and download as a ZIP file.",
-  },
-  {
-    id: "ranges",
-    label: "Split by ranges",
-    description: "Each range becomes its own PDF. Example: 1-3, 4-6",
-  },
-  {
-    id: "extract",
-    label: "Extract to one PDF",
-    description: "Pull selected pages into a single new PDF. Example: 1, 3-5",
-  },
-];
+function getSplitModes(messages: ReturnType<typeof useTranslations>): {
+  id: SplitMode;
+  label: string;
+  description: string;
+}[] {
+  return [
+    {
+      id: "each-page",
+      label: messages.ui.everyPageSeparately,
+      description: messages.ui.everyPageSeparatelyDesc,
+    },
+    {
+      id: "ranges",
+      label: messages.ui.splitByRanges,
+      description: messages.ui.splitByRangesDesc,
+    },
+    {
+      id: "extract",
+      label: messages.ui.extractToOnePdf,
+      description: messages.ui.extractToOnePdfDesc,
+    },
+  ];
+}
 
 export function SplitPdfTool() {
+  const messages = useTranslations();
+  const splitModes = getSplitModes(messages);
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [pageCount, setPageCount] = useState<number | null>(null);
@@ -55,18 +63,9 @@ export function SplitPdfTool() {
   const [resultCount, setResultCount] = useState(0);
   const [resultName, setResultName] = useState("");
 
-  const tool = getTool("split-pdf");
-  const maxBytes = tool?.clientMaxBytes ?? 25 * 1024 * 1024;
-
   async function selectFile(incoming: File) {
     if (!isPdf(incoming)) {
-      setError("Only PDF files are accepted.");
-      setPhase("error");
-      return;
-    }
-
-    if (incoming.size > maxBytes) {
-      setError(`"${incoming.name}" exceeds the ${formatSize(maxBytes)} limit.`);
+      setError(messages.ui.onlyPdfAccepted);
       setPhase("error");
       return;
     }
@@ -83,7 +82,7 @@ export function SplitPdfTool() {
       setPhase("idle");
     } catch {
       setPageCount(null);
-      setError("Could not read this PDF. Check that the file is valid.");
+      setError(messages.ui.couldNotReadPdf);
       setPhase("error");
     }
   }
@@ -106,7 +105,7 @@ export function SplitPdfTool() {
     }
 
     if (mode !== "each-page" && !rangeInput.trim()) {
-      setError("Enter which pages to split or extract.");
+      setError(messages.ui.enterPagesToSplit);
       setPhase("error");
       return;
     }
@@ -141,8 +140,8 @@ export function SplitPdfTool() {
             ? "This PDF is password-protected. Remove the password and try again."
             : cause.message.includes("Invalid page")
               ? cause.message
-              : "Could not split this PDF. Check that the file is valid."
-          : "Could not split this PDF.";
+              : messages.ui.couldNotSplitPdf
+          : messages.ui.couldNotSplitPdf;
       setError(message);
       setPhase("error");
     }
@@ -180,12 +179,8 @@ export function SplitPdfTool() {
             void selectFile(dropped);
           }
         }}
-        className={[
-          "cursor-pointer rounded border border-dashed px-6 py-12 text-center transition-colors",
-          dragging
-            ? "border-border-strong bg-background-subtle"
-            : "border-border hover:border-border-strong hover:bg-background-subtle",
-        ].join(" ")}
+        data-dragging={dragging}
+        className="glass-dropzone cursor-pointer px-6 py-12 text-center"
       >
         <input
           ref={inputRef}
@@ -200,10 +195,10 @@ export function SplitPdfTool() {
             event.target.value = "";
           }}
         />
-        <p className="text-[15px] text-foreground">Select a PDF file</p>
-        <p className="mt-1.5 text-sm text-muted">or drag and drop here</p>
+        <p className="text-[15px] text-foreground">{messages.common.selectPdf}</p>
+        <p className="mt-1.5 text-sm text-muted">{messages.common.orDragDrop}</p>
         <p className="mt-3 text-xs text-faint">
-          Up to {formatSize(maxBytes)} · processed locally in your browser
+          {messages.common.processedLocally}
         </p>
       </div>
 
@@ -222,14 +217,14 @@ export function SplitPdfTool() {
               onClick={clearFile}
               className="shrink-0 text-sm text-muted hover:text-foreground"
             >
-              Remove
+              {messages.common.remove}
             </button>
           </div>
 
           <div>
             <p className="text-sm font-medium text-foreground">How to split</p>
             <div className="mt-3 space-y-2">
-              {SPLIT_MODES.map((option) => (
+              {splitModes.map((option) => (
                 <label
                   key={option.id}
                   className={[
@@ -290,18 +285,18 @@ export function SplitPdfTool() {
               type="button"
               onClick={() => void handleSplit()}
               disabled={phase === "splitting" || phase === "loading"}
-              className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="btn-primary"
             >
-              {phase === "splitting" ? "Splitting…" : "Split PDF"}
+              {phase === "splitting" ? messages.ui.splitting : messages.ui.splitPdf}
             </button>
 
             {phase === "done" && resultBlob && (
               <button
                 type="button"
                 onClick={handleDownload}
-                className="rounded border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background-subtle"
+                className="btn-ghost"
               >
-                Download {resultCount === 1 ? "PDF" : "ZIP"}
+                {resultCount === 1 ? messages.common.downloadPdf : messages.ui.downloadZip}
               </button>
             )}
           </div>
@@ -315,7 +310,7 @@ export function SplitPdfTool() {
       )}
 
       {error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-red-400" role="alert">
           {error}
         </p>
       )}

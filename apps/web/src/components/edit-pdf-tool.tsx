@@ -1,15 +1,16 @@
 "use client";
 
-import { getTool } from "@convert-hub/conversion-rules";
 import { useRef, useState } from "react";
 import { addTextToPdf, type TextPosition } from "../lib/edit-pdf";
-import { baseName, formatFileSize, isPdf, loadPdfDocument } from "../lib/pdf-io";
+import { baseName, isPdf, loadPdfDocument } from "../lib/pdf-io";
 import { downloadBlob } from "../lib/merge-pdf";
 import { PdfToolShell } from "./pdf-tool-shell";
+import { useTranslations } from "../lib/i18n/locale-provider";
 
 type Phase = "idle" | "processing" | "done" | "error";
 
 export function EditPdfTool() {
+  const messages = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [pageCount, setPageCount] = useState(0);
@@ -22,17 +23,9 @@ export function EditPdfTool() {
   const [error, setError] = useState<string | null>(null);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
 
-  const tool = getTool("edit-pdf");
-  const maxBytes = tool?.clientMaxBytes ?? 25 * 1024 * 1024;
-
   async function selectFile(incoming: File) {
     if (!isPdf(incoming)) {
-      setError("Only PDF files are accepted.");
-      setPhase("error");
-      return;
-    }
-    if (incoming.size > maxBytes) {
-      setError(`"${incoming.name}" exceeds the ${formatFileSize(maxBytes)} limit.`);
+      setError(messages.ui.onlyPdfAccepted);
       setPhase("error");
       return;
     }
@@ -45,7 +38,7 @@ export function EditPdfTool() {
       setError(null);
       setPhase("idle");
     } catch {
-      setError("Could not read this PDF. It may be password-protected.");
+      setError(messages.ui.couldNotReadPdfProtected);
       setPhase("error");
     }
   }
@@ -76,7 +69,7 @@ export function EditPdfTool() {
       setResultBlob(new Blob([bytes.slice()], { type: "application/pdf" }));
       setPhase("done");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not edit PDF.");
+      setError(cause instanceof Error ? cause.message : messages.ui.couldNotEditPdf);
       setPhase("error");
     }
   }
@@ -86,14 +79,13 @@ export function EditPdfTool() {
       inputRef={inputRef}
       dragging={dragging}
       setDragging={setDragging}
-      maxBytes={maxBytes}
       onSelect={(f) => void selectFile(f)}
       file={file}
       onClear={clearFile}
       phase={phase}
       error={error}
-      actionLabel="Add text to PDF"
-      processingLabel="Applying…"
+      actionLabel={messages.ui.addTextToPdf}
+      processingLabel={messages.common.applying}
       onAction={() => void handleApply()}
       onDownload={() => {
         if (resultBlob && file) {
@@ -112,7 +104,7 @@ export function EditPdfTool() {
               onChange={(e) => setText(e.target.value)}
               rows={3}
               className="w-full rounded border border-border bg-background px-3 py-2 text-sm"
-              placeholder="Enter text overlay…"
+              placeholder={messages.ui.enterTextOverlay}
             />
           </label>
           <div className="flex flex-wrap gap-4">
@@ -128,7 +120,7 @@ export function EditPdfTool() {
               />
             </label>
             <label className="space-y-1 text-sm">
-              <span className="font-medium">Position</span>
+              <span className="font-medium">{messages.ui.position}</span>
               <select
                 value={position}
                 onChange={(e) => setPosition(e.target.value as TextPosition)}

@@ -1,15 +1,16 @@
 "use client";
 
-import { getTool } from "@convert-hub/conversion-rules";
 import { useRef, useState } from "react";
 import { downloadBlob } from "../lib/merge-pdf";
 import { addPageNumbersToPdf, type PageNumberPosition } from "../lib/page-numbers-pdf";
 import { baseName, formatFileSize, isPdf } from "../lib/pdf-io";
 import { PdfToolShell } from "./pdf-tool-shell";
+import { useTranslations } from "../lib/i18n/locale-provider";
 
 type Phase = "idle" | "processing" | "done" | "error";
 
 export function PageNumbersPdfTool() {
+  const messages = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [startAt, setStartAt] = useState(1);
@@ -20,17 +21,9 @@ export function PageNumbersPdfTool() {
   const [error, setError] = useState<string | null>(null);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
 
-  const tool = getTool("page-numbers-pdf");
-  const maxBytes = tool?.clientMaxBytes ?? 25 * 1024 * 1024;
-
   function selectFile(incoming: File) {
     if (!isPdf(incoming)) {
-      setError("Only PDF files are accepted.");
-      setPhase("error");
-      return;
-    }
-    if (incoming.size > maxBytes) {
-      setError(`"${incoming.name}" exceeds the ${formatFileSize(maxBytes)} limit.`);
+      setError(messages.ui.onlyPdfAccepted);
       setPhase("error");
       return;
     }
@@ -50,7 +43,7 @@ export function PageNumbersPdfTool() {
       setResultBlob(new Blob([bytes.slice()], { type: "application/pdf" }));
       setPhase("done");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not add page numbers.");
+      setError(cause instanceof Error ? cause.message : messages.ui.couldNotAddPageNumbers);
       setPhase("error");
     }
   }
@@ -60,14 +53,13 @@ export function PageNumbersPdfTool() {
       inputRef={inputRef}
       dragging={dragging}
       setDragging={setDragging}
-      maxBytes={maxBytes}
       onSelect={selectFile}
       file={file}
       onClear={() => { setFile(null); setResultBlob(null); setError(null); setPhase("idle"); if (inputRef.current) inputRef.current.value = ""; }}
       phase={phase}
       error={error}
-      actionLabel="Add page numbers"
-      processingLabel="Applying…"
+      actionLabel={messages.ui.addPageNumbers}
+      processingLabel={messages.common.applying}
       onAction={() => void handleAddNumbers()}
       onDownload={() => { if (resultBlob && file) downloadBlob(resultBlob, `${baseName(file.name)}-numbered.pdf`); }}
       resultReady={phase === "done" && !!resultBlob}
@@ -79,7 +71,7 @@ export function PageNumbersPdfTool() {
             <input type="number" min={1} value={startAt} onChange={(e) => setStartAt(Number(e.target.value))} className="block w-20 rounded border border-border px-2 py-1" />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="font-medium">Position</span>
+            <span className="font-medium">{messages.ui.pageNumberPosition}</span>
             <select value={position} onChange={(e) => setPosition(e.target.value as PageNumberPosition)} className="block rounded border border-border px-2 py-1">
               <option value="bottom-center">Bottom center</option>
               <option value="bottom-right">Bottom right</option>

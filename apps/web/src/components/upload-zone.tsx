@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useTranslations } from "../lib/i18n/locale-provider";
 
 interface UploadZoneProps {
   accept?: string;
@@ -11,6 +12,7 @@ interface UploadZoneProps {
 export function UploadZone({ accept, multiple, label }: UploadZoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
+  const messages = useTranslations();
 
   return (
     <div
@@ -32,12 +34,8 @@ export function UploadZone({ accept, multiple, label }: UploadZoneProps) {
         event.preventDefault();
         setDragging(false);
       }}
-      className={[
-        "cursor-pointer rounded border border-dashed px-6 py-16 text-center transition-colors",
-        dragging
-          ? "border-border-strong bg-background-subtle"
-          : "border-border hover:border-border-strong hover:bg-background-subtle",
-      ].join(" ")}
+      data-dragging={dragging}
+      className="glass-dropzone cursor-pointer px-6 py-16 text-center"
     >
       <input
         ref={inputRef}
@@ -50,7 +48,7 @@ export function UploadZone({ accept, multiple, label }: UploadZoneProps) {
         }}
       />
       <p className="text-[15px] text-foreground">{label}</p>
-      <p className="mt-1.5 text-sm text-muted">or drag and drop here</p>
+      <p className="mt-1.5 text-sm text-muted">{messages.common.orDragDrop}</p>
     </div>
   );
 }

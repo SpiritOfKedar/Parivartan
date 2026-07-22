@@ -2,6 +2,7 @@
 
 import type { ReactNode, RefObject } from "react";
 import { formatFileSize } from "../lib/pdf-io";
+import { useTranslations } from "../lib/i18n/locale-provider";
 
 type Phase = "idle" | "processing" | "done" | "error";
 
@@ -9,7 +10,6 @@ interface PdfToolShellProps {
   inputRef: RefObject<HTMLInputElement | null>;
   dragging: boolean;
   setDragging: (v: boolean) => void;
-  maxBytes: number;
   onSelect: (file: File) => void;
   file: File | null;
   onClear: () => void;
@@ -28,7 +28,6 @@ export function PdfToolShell({
   inputRef,
   dragging,
   setDragging,
-  maxBytes,
   onSelect,
   file,
   onClear,
@@ -39,9 +38,12 @@ export function PdfToolShell({
   onAction,
   onDownload,
   resultReady,
-  downloadLabel = "Download PDF",
+  downloadLabel,
   children,
 }: PdfToolShellProps) {
+  const messages = useTranslations();
+  const resolvedDownload = downloadLabel ?? messages.common.downloadPdf;
+
   return (
     <div className="space-y-6">
       <div
@@ -65,12 +67,8 @@ export function PdfToolShell({
           const dropped = e.dataTransfer.files[0];
           if (dropped) onSelect(dropped);
         }}
-        className={[
-          "cursor-pointer rounded border border-dashed px-6 py-12 text-center transition-colors",
-          dragging
-            ? "border-border-strong bg-background-subtle"
-            : "border-border hover:border-border-strong hover:bg-background-subtle",
-        ].join(" ")}
+        data-dragging={dragging}
+        className="glass-dropzone cursor-pointer px-6 py-14 text-center"
       >
         <input
           ref={inputRef}
@@ -83,16 +81,18 @@ export function PdfToolShell({
             e.target.value = "";
           }}
         />
-        <p className="text-[15px] text-foreground">Select a PDF file</p>
-        <p className="mt-1.5 text-sm text-muted">or drag and drop here</p>
+        <p className="text-[15px] text-foreground">
+          {messages.ui.selectPdfFile}
+        </p>
+        <p className="mt-1.5 text-sm text-muted">{messages.common.orDragDrop}</p>
         <p className="mt-3 text-xs text-faint">
-          Up to {formatFileSize(maxBytes)} · processed locally
+          {messages.common.processedLocally}
         </p>
       </div>
 
       {file && (
         <section className="space-y-6">
-          <div className="flex items-baseline justify-between gap-4 rounded border border-border bg-background px-4 py-3">
+          <div className="flex items-baseline justify-between gap-4 rounded-xl border border-border bg-[var(--glass-bg)] px-4 py-3 backdrop-blur">
             <div className="min-w-0">
               <p className="truncate text-[15px]">{file.name}</p>
               <p className="text-sm text-muted">{formatFileSize(file.size)}</p>
@@ -100,9 +100,9 @@ export function PdfToolShell({
             <button
               type="button"
               onClick={onClear}
-              className="text-sm text-muted hover:text-foreground"
+              className="text-sm text-muted transition-colors hover:text-foreground"
             >
-              Remove
+              {messages.common.remove}
             </button>
           </div>
           {children}
@@ -111,17 +111,13 @@ export function PdfToolShell({
               type="button"
               onClick={onAction}
               disabled={phase === "processing"}
-              className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background disabled:opacity-40"
+              className="btn-primary"
             >
               {phase === "processing" ? processingLabel : actionLabel}
             </button>
             {resultReady && (
-              <button
-                type="button"
-                onClick={onDownload}
-                className="rounded border border-border px-4 py-2 text-sm hover:bg-background-subtle"
-              >
-                {downloadLabel}
+              <button type="button" onClick={onDownload} className="btn-ghost">
+                {resolvedDownload}
               </button>
             )}
           </div>
@@ -129,7 +125,7 @@ export function PdfToolShell({
       )}
 
       {error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-red-400" role="alert">
           {error}
         </p>
       )}

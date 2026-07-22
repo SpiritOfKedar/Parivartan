@@ -13,6 +13,7 @@ import {
 } from "../lib/audio-editor";
 import { createWaveform, type WaveformHandle } from "../lib/audio-waveform";
 import { downloadBlob } from "../lib/merge-pdf";
+import { useTranslations } from "../lib/i18n/locale-provider";
 
 type Phase = "idle" | "loading-ffmpeg" | "merging" | "done" | "error";
 
@@ -171,6 +172,7 @@ function ClipTrimInputs({
 }
 
 export function MergeAudioTool() {
+  const messages = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const [clips, setClips] = useState<ClipEntry[]>([]);
@@ -202,7 +204,7 @@ export function MergeAudioTool() {
     const rejected = list.length - audioFiles.length;
 
     if (rejected > 0) {
-      setError("Only supported audio files are accepted.");
+      setError(messages.ui.onlyAudioAccepted);
       setPhase("error");
     } else if (phase === "error") {
       setError(null);
@@ -346,7 +348,7 @@ export function MergeAudioTool() {
     audio.onended = () => setPlayingId(null);
     audio.onerror = () => {
       setPlayingId(null);
-      setError("Could not play this clip.");
+      setError(messages.ui.couldNotPlayClip);
       setPhase("error");
     };
 
@@ -357,7 +359,7 @@ export function MergeAudioTool() {
 
   async function handleMergeDownload() {
     if (clips.length === 0) {
-      setError("Add at least one audio clip.");
+      setError(messages.ui.addAtLeastOneClip);
       setPhase("error");
       return;
     }
@@ -366,7 +368,7 @@ export function MergeAudioTool() {
     setPlayingId(null);
     setPhase("loading-ffmpeg");
     setError(null);
-    setProgressText("Loading audio engine…");
+    setProgressText(messages.ui.loadingAudioEngine);
 
     try {
       const blob = await mergeAudioClips(
@@ -395,7 +397,7 @@ export function MergeAudioTool() {
       setProgressText(null);
     } catch (cause) {
       const message =
-        cause instanceof Error ? cause.message : "Could not merge audio.";
+        cause instanceof Error ? cause.message : messages.ui.couldNotMergeAudio;
       setError(message);
       setPhase("error");
       setProgressText(null);
@@ -428,12 +430,8 @@ export function MergeAudioTool() {
             void addFiles(event.dataTransfer.files);
           }
         }}
-        className={[
-          "cursor-pointer rounded border border-dashed px-6 py-12 text-center transition-colors",
-          dragging
-            ? "border-border-strong bg-background-subtle"
-            : "border-border hover:border-border-strong hover:bg-background-subtle",
-        ].join(" ")}
+        data-dragging={dragging}
+        className="glass-dropzone cursor-pointer px-6 py-12 text-center"
       >
         <input
           ref={inputRef}
@@ -448,8 +446,8 @@ export function MergeAudioTool() {
             }
           }}
         />
-        <p className="text-[15px] text-foreground">Select audio files</p>
-        <p className="mt-1.5 text-sm text-muted">or drag and drop here</p>
+        <p className="text-[15px] text-foreground">{messages.common.selectAudio}</p>
+        <p className="mt-1.5 text-sm text-muted">{messages.common.orDragDrop}</p>
         <p className="mt-3 text-xs text-faint">
           MP3, WAV, M4A, AAC, OGG, FLAC · up to {formatSize(maxBytes)} total ·
           processed locally
@@ -536,7 +534,7 @@ export function MergeAudioTool() {
                         }
                         className="px-2 py-1 text-sm text-muted hover:text-foreground"
                       >
-                        {isExpanded ? "Hide trim" : "Edit trim"}
+                        {isExpanded ? messages.ui.hideTrim : messages.ui.editTrim}
                       </button>
                       <button
                         type="button"
@@ -561,7 +559,7 @@ export function MergeAudioTool() {
                         onClick={() => removeClip(index)}
                         className="px-2 py-1 text-sm text-muted hover:text-foreground"
                       >
-                        Remove
+                        {messages.common.remove}
                       </button>
                     </div>
                   </div>
@@ -632,9 +630,9 @@ export function MergeAudioTool() {
                 type="button"
                 onClick={() => void handleMergeDownload()}
                 disabled={isProcessing}
-                className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+                className="btn-primary"
               >
-                {isProcessing ? "Processing…" : "Merge & Download"}
+                {isProcessing ? messages.ui.mergingAudio : messages.ui.mergeAudio}
               </button>
               {phase === "done" && (
                 <span className="text-sm text-muted">Download started.</span>
@@ -649,7 +647,7 @@ export function MergeAudioTool() {
       )}
 
       {error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-red-400" role="alert">
           {error}
         </p>
       )}

@@ -1,34 +1,28 @@
-import { ToolRow } from "../components/tool-row";
+import { CategoryBand } from "../components/category-band";
+import { Hero } from "../components/hero";
 import { getToolsByCategory } from "../lib/tools";
+import type { CategoryId } from "../lib/category-theme";
 
 export default function Home() {
   const groups = getToolsByCategory();
+  const categories = groups.map((group) => group.category as CategoryId);
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
-      <div className="max-w-xl">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          File conversion tools
-        </h1>
-        <p className="mt-2 text-[15px] text-muted">
-          Convert PDFs, images, and video. No account required.
-        </p>
-      </div>
+    <>
+      <Hero categories={categories} />
 
-      <div className="mt-12 space-y-10">
-        {groups.map((group) => (
-          <section key={group.category}>
-            <h2 className="text-xs font-medium uppercase tracking-wider text-faint">
-              {group.label}
-            </h2>
-            <ul className="mt-3 divide-y divide-border rounded border border-border bg-background">
-              {group.tools.map((tool) => (
-                <ToolRow key={tool.id} tool={tool} />
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
-    </main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-20 sm:px-10">
+        <div className="space-y-24">
+          {groups.map((group, i) => (
+            <CategoryBand
+              key={group.category}
+              category={group.category as CategoryId}
+              tools={group.tools}
+              index={i + 1}
+            />
+          ))}
+        </div>
+      </main>
+    </>
   );
 }

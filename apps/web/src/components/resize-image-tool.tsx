@@ -1,6 +1,5 @@
 "use client";
 
-import { getTool } from "@convert-hub/conversion-rules";
 import { useEffect, useRef, useState } from "react";
 import { isSupportedImage } from "../lib/image-io";
 import {
@@ -11,6 +10,7 @@ import {
 } from "../lib/resize-image";
 import { downloadBlob } from "../lib/merge-pdf";
 import type { ImageOutputFormat } from "../lib/image-io";
+import { useTranslations } from "../lib/i18n/locale-provider";
 
 type Phase = "idle" | "processing" | "done" | "error";
 type ResizeMode = "custom" | "percent";
@@ -28,6 +28,7 @@ function formatSize(bytes: number): string {
 }
 
 export function ResizeImageTool() {
+  const messages = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -46,9 +47,6 @@ export function ResizeImageTool() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ResizeImageResult | null>(null);
 
-  const tool = getTool("resize-image");
-  const maxBytes = tool?.clientMaxBytes ?? 25 * 1024 * 1024;
-
   useEffect(() => {
     return () => {
       if (previewUrl) {
@@ -65,13 +63,7 @@ export function ResizeImageTool() {
 
   function selectFile(incoming: File) {
     if (!isSupportedImage(incoming)) {
-      setError("Only image files are accepted (JPEG, PNG, WebP, GIF).");
-      setPhase("error");
-      return;
-    }
-
-    if (incoming.size > maxBytes) {
-      setError(`"${incoming.name}" exceeds the ${formatSize(maxBytes)} limit.`);
+      setError(messages.ui.onlyImagesAccepted);
       setPhase("error");
       return;
     }
@@ -153,7 +145,7 @@ export function ResizeImageTool() {
 
     const target = getTargetDimensions();
     if (!target) {
-      setError("Enter valid width and height values.");
+      setError(messages.ui.enterValidDimensions);
       setPhase("error");
       return;
     }
@@ -173,7 +165,7 @@ export function ResizeImageTool() {
       setPhase("done");
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : "Could not resize this image.",
+        cause instanceof Error ? cause.message : messages.ui.couldNotResizeImage,
       );
       setPhase("error");
     }
@@ -213,12 +205,8 @@ export function ResizeImageTool() {
             selectFile(dropped);
           }
         }}
-        className={[
-          "cursor-pointer rounded border border-dashed px-6 py-12 text-center transition-colors",
-          dragging
-            ? "border-border-strong bg-background-subtle"
-            : "border-border hover:border-border-strong hover:bg-background-subtle",
-        ].join(" ")}
+        data-dragging={dragging}
+        className="glass-dropzone cursor-pointer px-6 py-12 text-center"
       >
         <input
           ref={inputRef}
@@ -233,10 +221,10 @@ export function ResizeImageTool() {
             event.target.value = "";
           }}
         />
-        <p className="text-[15px] text-foreground">Select an image file</p>
-        <p className="mt-1.5 text-sm text-muted">or drag and drop here</p>
+        <p className="text-[15px] text-foreground">{messages.common.selectImage}</p>
+        <p className="mt-1.5 text-sm text-muted">{messages.common.orDragDrop}</p>
         <p className="mt-3 text-xs text-faint">
-          JPEG, PNG, WebP, GIF · up to {formatSize(maxBytes)} · processed locally
+          JPEG, PNG, WebP, GIF · processed locally
         </p>
       </div>
 
@@ -261,7 +249,7 @@ export function ResizeImageTool() {
               onClick={clearFile}
               className="shrink-0 text-sm text-muted hover:text-foreground"
             >
-              Remove
+              {messages.common.remove}
             </button>
           </div>
 
@@ -320,7 +308,7 @@ export function ResizeImageTool() {
             <div className="space-y-3">
               <div className="flex flex-wrap items-end gap-4">
                 <label className="block space-y-1">
-                  <span className="text-sm font-medium text-foreground">Width</span>
+                  <span className="text-sm font-medium text-foreground">{messages.ui.width}</span>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -330,7 +318,7 @@ export function ResizeImageTool() {
                   />
                 </label>
                 <label className="block space-y-1">
-                  <span className="text-sm font-medium text-foreground">Height</span>
+                  <span className="text-sm font-medium text-foreground">{messages.ui.height}</span>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -352,7 +340,7 @@ export function ResizeImageTool() {
           )}
 
           <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground">Output format</p>
+            <p className="text-sm font-medium text-foreground">{messages.ui.format}</p>
             <div className="flex flex-wrap gap-2">
               {(["jpeg", "png", "webp"] as const).map((value) => (
                 <button
@@ -384,18 +372,18 @@ export function ResizeImageTool() {
               type="button"
               onClick={() => void handleResize()}
               disabled={phase === "processing"}
-              className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="btn-primary"
             >
-              {phase === "processing" ? "Resizing…" : "Resize image"}
+              {phase === "processing" ? messages.ui.resizing : messages.ui.resizeImage}
             </button>
 
             {phase === "done" && result && (
               <button
                 type="button"
                 onClick={handleDownload}
-                className="rounded border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background-subtle"
+                className="btn-ghost"
               >
-                Download
+                {messages.common.download}
               </button>
             )}
           </div>
@@ -403,7 +391,7 @@ export function ResizeImageTool() {
       )}
 
       {error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-red-400" role="alert">
           {error}
         </p>
       )}

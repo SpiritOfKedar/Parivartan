@@ -1,11 +1,11 @@
 "use client";
 
-import { getTool } from "@convert-hub/conversion-rules";
 import { useRef, useState } from "react";
 import { downloadBlob } from "../lib/merge-pdf";
 import { baseName, formatFileSize, isPdf, loadPdfDocument } from "../lib/pdf-io";
 import { rotateAllPdfPages, type RotationAngle } from "../lib/rotate-pdf";
 import { PdfToolShell } from "./pdf-tool-shell";
+import { useTranslations } from "../lib/i18n/locale-provider";
 
 type Phase = "idle" | "processing" | "done" | "error";
 
@@ -16,6 +16,7 @@ const ROTATION_OPTIONS: { label: string; angle: RotationAngle }[] = [
 ];
 
 export function RotatePdfTool() {
+  const messages = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [pageCount, setPageCount] = useState(0);
@@ -25,17 +26,9 @@ export function RotatePdfTool() {
   const [error, setError] = useState<string | null>(null);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
 
-  const tool = getTool("rotate-pdf");
-  const maxBytes = tool?.clientMaxBytes ?? 25 * 1024 * 1024;
-
   async function selectFile(incoming: File) {
     if (!isPdf(incoming)) {
-      setError("Only PDF files are accepted.");
-      setPhase("error");
-      return;
-    }
-    if (incoming.size > maxBytes) {
-      setError(`"${incoming.name}" exceeds the ${formatFileSize(maxBytes)} limit.`);
+      setError(messages.ui.onlyPdfAccepted);
       setPhase("error");
       return;
     }
@@ -47,7 +40,7 @@ export function RotatePdfTool() {
       setError(null);
       setPhase("idle");
     } catch {
-      setError("Could not read this PDF. It may be password-protected.");
+      setError(messages.ui.couldNotReadPdfProtected);
       setPhase("error");
     }
   }
@@ -62,7 +55,7 @@ export function RotatePdfTool() {
       setResultBlob(new Blob([bytes.slice()], { type: "application/pdf" }));
       setPhase("done");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not rotate PDF.");
+      setError(cause instanceof Error ? cause.message : messages.ui.couldNotRotatePdf);
       setPhase("error");
     }
   }
@@ -72,14 +65,13 @@ export function RotatePdfTool() {
       inputRef={inputRef}
       dragging={dragging}
       setDragging={setDragging}
-      maxBytes={maxBytes}
       onSelect={(f) => void selectFile(f)}
       file={file}
       onClear={() => { setFile(null); setPageCount(0); setResultBlob(null); setError(null); setPhase("idle"); if (inputRef.current) inputRef.current.value = ""; }}
       phase={phase}
       error={error}
-      actionLabel="Rotate PDF"
-      processingLabel="Rotating…"
+      actionLabel={messages.ui.rotatePdf}
+      processingLabel={messages.ui.rotating}
       onAction={() => void handleRotate()}
       onDownload={() => { if (resultBlob && file) downloadBlob(resultBlob, `${baseName(file.name)}-rotated.pdf`); }}
       resultReady={phase === "done" && !!resultBlob}

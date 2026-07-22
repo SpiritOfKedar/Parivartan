@@ -1,5 +1,8 @@
 import type { ProcessingTarget, ToolDefinition } from "@convert-hub/shared";
 
+/** No practical client-side size cap — tools accept any file the browser can load. */
+const UNLIMITED = Number.MAX_SAFE_INTEGER;
+
 export const tools: ToolDefinition[] = [
   {
     id: "merge-pdf",
@@ -7,7 +10,7 @@ export const tools: ToolDefinition[] = [
     category: "pdf",
     clientCapable: true,
     requiresServer: false,
-    clientMaxBytes: 10 * 1024 * 1024,
+    clientMaxBytes: UNLIMITED,
   },
   {
     id: "compress-pdf",
@@ -15,7 +18,7 @@ export const tools: ToolDefinition[] = [
     category: "pdf",
     clientCapable: true,
     requiresServer: false,
-    clientMaxBytes: 25 * 1024 * 1024,
+    clientMaxBytes: UNLIMITED,
   },
   {
     id: "split-pdf",
@@ -23,7 +26,7 @@ export const tools: ToolDefinition[] = [
     category: "pdf",
     clientCapable: true,
     requiresServer: false,
-    clientMaxBytes: 25 * 1024 * 1024,
+    clientMaxBytes: UNLIMITED,
   },
   {
     id: "edit-pdf",
@@ -31,7 +34,7 @@ export const tools: ToolDefinition[] = [
     category: "pdf",
     clientCapable: true,
     requiresServer: false,
-    clientMaxBytes: 25 * 1024 * 1024,
+    clientMaxBytes: UNLIMITED,
   },
   {
     id: "watermark-pdf",
@@ -39,7 +42,7 @@ export const tools: ToolDefinition[] = [
     category: "pdf",
     clientCapable: true,
     requiresServer: false,
-    clientMaxBytes: 25 * 1024 * 1024,
+    clientMaxBytes: UNLIMITED,
   },
   {
     id: "rotate-pdf",
@@ -47,7 +50,7 @@ export const tools: ToolDefinition[] = [
     category: "pdf",
     clientCapable: true,
     requiresServer: false,
-    clientMaxBytes: 25 * 1024 * 1024,
+    clientMaxBytes: UNLIMITED,
   },
   {
     id: "pdf-summarize",
@@ -55,7 +58,7 @@ export const tools: ToolDefinition[] = [
     category: "pdf",
     clientCapable: true,
     requiresServer: false,
-    clientMaxBytes: 25 * 1024 * 1024,
+    clientMaxBytes: UNLIMITED,
   },
   {
     id: "pdf-translate",
@@ -63,7 +66,7 @@ export const tools: ToolDefinition[] = [
     category: "pdf",
     clientCapable: true,
     requiresServer: false,
-    clientMaxBytes: 25 * 1024 * 1024,
+    clientMaxBytes: UNLIMITED,
   },
   {
     id: "protect-pdf",
@@ -71,7 +74,7 @@ export const tools: ToolDefinition[] = [
     category: "pdf",
     clientCapable: true,
     requiresServer: false,
-    clientMaxBytes: 25 * 1024 * 1024,
+    clientMaxBytes: UNLIMITED,
   },
   {
     id: "page-numbers-pdf",
@@ -79,7 +82,7 @@ export const tools: ToolDefinition[] = [
     category: "pdf",
     clientCapable: true,
     requiresServer: false,
-    clientMaxBytes: 25 * 1024 * 1024,
+    clientMaxBytes: UNLIMITED,
   },
   {
     id: "pdf-to-word",
@@ -119,7 +122,7 @@ export const tools: ToolDefinition[] = [
     category: "pdf",
     clientCapable: true,
     requiresServer: false,
-    clientMaxBytes: 25 * 1024 * 1024,
+    clientMaxBytes: UNLIMITED,
   },
   {
     id: "pdf-to-jpg",
@@ -127,7 +130,7 @@ export const tools: ToolDefinition[] = [
     category: "image",
     clientCapable: true,
     requiresServer: false,
-    clientMaxBytes: 25 * 1024 * 1024,
+    clientMaxBytes: UNLIMITED,
   },
   {
     id: "compress-image",
@@ -135,7 +138,7 @@ export const tools: ToolDefinition[] = [
     category: "image",
     clientCapable: true,
     requiresServer: false,
-    clientMaxBytes: 15 * 1024 * 1024,
+    clientMaxBytes: UNLIMITED,
   },
   {
     id: "resize-image",
@@ -143,7 +146,31 @@ export const tools: ToolDefinition[] = [
     category: "image",
     clientCapable: true,
     requiresServer: false,
-    clientMaxBytes: 25 * 1024 * 1024,
+    clientMaxBytes: UNLIMITED,
+  },
+  {
+    id: "crop-image",
+    name: "Crop Image",
+    category: "image",
+    clientCapable: true,
+    requiresServer: false,
+    clientMaxBytes: UNLIMITED,
+  },
+  {
+    id: "convert-to-jpg",
+    name: "Convert to JPG",
+    category: "image",
+    clientCapable: true,
+    requiresServer: false,
+    clientMaxBytes: UNLIMITED,
+  },
+  {
+    id: "convert-from-jpg",
+    name: "Convert from JPG",
+    category: "image",
+    clientCapable: true,
+    requiresServer: false,
+    clientMaxBytes: UNLIMITED,
   },
   {
     id: "photo-editor",
@@ -151,7 +178,7 @@ export const tools: ToolDefinition[] = [
     category: "image",
     clientCapable: true,
     requiresServer: false,
-    clientMaxBytes: 25 * 1024 * 1024,
+    clientMaxBytes: UNLIMITED,
   },
   {
     id: "upscale-image",
@@ -159,7 +186,7 @@ export const tools: ToolDefinition[] = [
     category: "image",
     clientCapable: true,
     requiresServer: false,
-    clientMaxBytes: 25 * 1024 * 1024,
+    clientMaxBytes: UNLIMITED,
   },
   {
     id: "remove-background",
@@ -167,7 +194,39 @@ export const tools: ToolDefinition[] = [
     category: "image",
     clientCapable: true,
     requiresServer: false,
-    clientMaxBytes: 25 * 1024 * 1024,
+    clientMaxBytes: UNLIMITED,
+  },
+  {
+    id: "watermark-image",
+    name: "Watermark Image",
+    category: "image",
+    clientCapable: true,
+    requiresServer: false,
+    clientMaxBytes: UNLIMITED,
+  },
+  {
+    id: "meme-generator",
+    name: "Meme Generator",
+    category: "image",
+    clientCapable: true,
+    requiresServer: false,
+    clientMaxBytes: UNLIMITED,
+  },
+  {
+    id: "rotate-image",
+    name: "Rotate Image",
+    category: "image",
+    clientCapable: true,
+    requiresServer: false,
+    clientMaxBytes: UNLIMITED,
+  },
+  {
+    id: "html-to-image",
+    name: "HTML to Image",
+    category: "image",
+    clientCapable: true,
+    requiresServer: false,
+    clientMaxBytes: UNLIMITED,
   },
   {
     id: "blur-faces",
@@ -175,7 +234,7 @@ export const tools: ToolDefinition[] = [
     category: "image",
     clientCapable: true,
     requiresServer: false,
-    clientMaxBytes: 25 * 1024 * 1024,
+    clientMaxBytes: UNLIMITED,
   },
   {
     id: "mp4-to-webm",

@@ -1,6 +1,5 @@
 "use client";
 
-import { getTool } from "@convert-hub/conversion-rules";
 import { useEffect, useRef, useState } from "react";
 import {
   getAiProviders,
@@ -11,6 +10,7 @@ import { extractPdfText } from "../lib/extract-pdf-text";
 import { downloadBlob } from "../lib/merge-pdf";
 import { baseName, formatFileSize, isPdf } from "../lib/pdf-io";
 import { PdfToolShell } from "./pdf-tool-shell";
+import { useTranslations } from "../lib/i18n/locale-provider";
 
 type Phase = "idle" | "extracting" | "processing" | "done" | "error";
 
@@ -20,6 +20,7 @@ const PROVIDER_LABELS: Record<AiProvider, string> = {
 };
 
 export function PdfSummarizeTool() {
+  const messages = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [providers, setProviders] = useState<AiProvider[]>([]);
@@ -30,9 +31,6 @@ export function PdfSummarizeTool() {
   const [dragging, setDragging] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
-
-  const tool = getTool("pdf-summarize");
-  const maxBytes = tool?.clientMaxBytes ?? 25 * 1024 * 1024;
 
   useEffect(() => {
     void getAiProviders()
@@ -45,12 +43,7 @@ export function PdfSummarizeTool() {
 
   function selectFile(incoming: File) {
     if (!isPdf(incoming)) {
-      setError("Only PDF files are accepted.");
-      setPhase("error");
-      return;
-    }
-    if (incoming.size > maxBytes) {
-      setError(`"${incoming.name}" exceeds the ${formatFileSize(maxBytes)} limit.`);
+      setError(messages.ui.onlyPdfAccepted);
       setPhase("error");
       return;
     }
@@ -82,7 +75,7 @@ export function PdfSummarizeTool() {
       setModelUsed(result.model);
       setPhase("done");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Summarization failed.");
+      setError(cause instanceof Error ? cause.message : messages.ui.summaryFailed);
       setPhase("error");
     }
   }
@@ -98,22 +91,21 @@ export function PdfSummarizeTool() {
         inputRef={inputRef}
         dragging={dragging}
         setDragging={setDragging}
-        maxBytes={maxBytes}
-        onSelect={selectFile}
+                onSelect={selectFile}
         file={file}
         onClear={() => { setFile(null); setSummary(""); setError(null); setPhase("idle"); if (inputRef.current) inputRef.current.value = ""; }}
         phase={phase === "extracting" || phase === "processing" ? "processing" : phase === "done" ? "done" : phase === "error" ? "error" : "idle"}
         error={null}
-        actionLabel="Summarize PDF"
-        processingLabel={phase === "extracting" ? "Extracting text…" : "Summarizing…"}
+        actionLabel={messages.ui.summarizePdf}
+        processingLabel={phase === "extracting" ? messages.ui.extractingText : messages.ui.summarizing}
         onAction={() => void handleSummarize()}
         onDownload={downloadSummary}
         resultReady={phase === "done" && !!summary}
-        downloadLabel="Download summary"
+        downloadLabel={messages.ui.downloadSummary}
       >
         {file && providers.length > 0 && (
           <label className="block space-y-1 text-sm">
-            <span className="font-medium">AI provider</span>
+            <span className="font-medium">{messages.ui.provider}</span>
             <select value={provider} onChange={(e) => setProvider(e.target.value as AiProvider)} className="rounded border border-border px-2 py-1">
               {providers.map((p) => (
                 <option key={p} value={p}>{PROVIDER_LABELS[p]}</option>
@@ -140,7 +132,7 @@ export function PdfSummarizeTool() {
         </section>
       )}
 
-      {error && <p className="text-sm text-red-700" role="alert">{error}</p>}
+      {error && <p className="text-sm text-red-400" role="alert">{error}</p>}
     </div>
   );
 }

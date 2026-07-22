@@ -6,7 +6,7 @@ import { buildObjectKey, createUploadUrl, uploadObject } from "../lib/storage.js
 
 export const uploadsRouter = Router();
 
-const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 500 * 1024 * 1024;
 
 const upload = multer({
   storage: multer.memoryStorage(),
