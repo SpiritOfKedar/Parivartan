@@ -15,6 +15,8 @@ export const mr: Messages = {
     searchTools: "साधने शोधा",
     searchPlaceholder: "साधने शोधा…",
     noToolsMatch: "“{query}” शी जुळणारी साधने नाहीत.",
+    openMenu: "मेनू उघडा",
+    closeMenu: "बंद करा",
     menu: {
       organizePdf: "संपादन आणि व्यवस्था",
       convertPdf: "रूपांतर आणि AI",

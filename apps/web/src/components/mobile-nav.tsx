@@ -17,8 +17,12 @@ export function MobileNav({ categories }: MobileNavProps) {
   const messages = useTranslations();
   const titleId = useId();
   const [open, setOpen] = useState(false);
-  const [expanded, setExpanded] = useState<CategoryId | null>(categories[0] ?? null);
-  const groups = getToolsByCategory();
+  const [expanded, setExpanded] = useState<CategoryId | null>(
+    categories[0] ?? null,
+  );
+  const groups = getToolsByCategory().filter((group) =>
+    categories.includes(group.category as CategoryId),
+  );
 
   useEffect(() => {
     if (!open) return;

@@ -12,6 +12,8 @@ export type Messages = {
     searchTools: string;
     searchPlaceholder: string;
     noToolsMatch: string;
+    openMenu: string;
+    closeMenu: string;
     menu: {
       organizePdf: string;
       convertPdf: string;
@@ -253,6 +255,8 @@ export const en: Messages = {
     searchTools: "Search tools",
     searchPlaceholder: "Search tools…",
     noToolsMatch: "No tools match “{query}”.",
+    openMenu: "Open menu",
+    closeMenu: "Close",
     menu: {
       organizePdf: "Organize & edit",
       convertPdf: "Convert & AI",

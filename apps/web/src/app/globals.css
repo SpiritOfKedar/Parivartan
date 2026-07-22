@@ -65,11 +65,14 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
   position: relative;
   min-height: 100%;
+  max-width: 100%;
+  overflow-x: clip;
   background: transparent;
   color: var(--foreground);
   font-family: var(--font-sans);
@@ -82,6 +85,7 @@ body {
 .glass-panel,
 .glass-panel-strong,
 .glass-nav,
+.glass-liquid,
 .glass-dropzone,
 .chip,
 .btn-primary,
@@ -161,47 +165,47 @@ body {
       inset 0 1px 0 0 var(--glass-highlight);
   }
 
-  /* Floating island: liquid glass — translucent so the meadow refracts through */
+  /* Floating island: dark liquid glass — meadow still soft-blurs through, type stays clear */
   .glass-nav {
     background:
       linear-gradient(
         165deg,
-        rgba(255, 255, 255, 0.22) 0%,
-        rgba(255, 255, 255, 0.06) 42%,
-        rgba(255, 255, 255, 0.1) 100%
+        rgba(255, 255, 255, 0.12) 0%,
+        rgba(255, 255, 255, 0.03) 42%,
+        rgba(255, 255, 255, 0.05) 100%
       ),
-      rgba(12, 16, 24, 0.42);
-    border: 1px solid rgba(255, 255, 255, 0.28);
+      rgba(6, 10, 16, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 999px;
-    backdrop-filter: blur(48px) saturate(190%);
-    -webkit-backdrop-filter: blur(48px) saturate(190%);
+    backdrop-filter: blur(48px) saturate(180%);
+    -webkit-backdrop-filter: blur(48px) saturate(180%);
     box-shadow:
-      0 12px 40px -12px rgba(0, 0, 0, 0.55),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
-      inset 0 -1px 0 0 rgba(255, 255, 255, 0.06);
+      0 12px 40px -12px rgba(0, 0, 0, 0.7),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
+      inset 0 -1px 0 0 rgba(255, 255, 255, 0.04);
     isolation: isolate;
   }
 
-  /* Mega-menu / floating panels — same liquid glass language */
+  /* Mega-menu / floating panels — opaque enough for white labels on clouds */
   .glass-liquid {
     position: relative;
     background:
       linear-gradient(
         160deg,
-        rgba(255, 255, 255, 0.2) 0%,
-        rgba(255, 255, 255, 0.05) 38%,
-        rgba(255, 255, 255, 0.08) 100%
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.03) 38%,
+        rgba(255, 255, 255, 0.05) 100%
       ),
-      rgba(10, 14, 22, 0.38);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+      rgba(8, 12, 18, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 1.25rem;
-    backdrop-filter: blur(52px) saturate(200%);
-    -webkit-backdrop-filter: blur(52px) saturate(200%);
+    backdrop-filter: blur(52px) saturate(180%);
+    -webkit-backdrop-filter: blur(52px) saturate(180%);
     box-shadow:
-      0 28px 64px -24px rgba(0, 0, 0, 0.65),
+      0 28px 64px -24px rgba(0, 0, 0, 0.75),
       0 0 0 1px rgba(255, 255, 255, 0.04),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.42),
-      inset 0 -1px 0 0 rgba(255, 255, 255, 0.06);
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
+      inset 0 -1px 0 0 rgba(255, 255, 255, 0.04);
     isolation: isolate;
     overflow: hidden;
   }
@@ -215,12 +219,12 @@ body {
     background:
       radial-gradient(
         120% 80% at 10% -20%,
-        rgba(255, 255, 255, 0.28) 0%,
+        rgba(255, 255, 255, 0.14) 0%,
         transparent 55%
       ),
       radial-gradient(
         90% 60% at 100% 0%,
-        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.06) 0%,
         transparent 45%
       );
     opacity: 0.9;
@@ -234,15 +238,14 @@ body {
   .glass-nav a,
   .glass-nav button {
     color: #fff;
-    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.35);
   }
 
   .glass-nav input {
-    background: rgba(255, 255, 255, 0.08) !important;
+    background: rgba(0, 0, 0, 0.35) !important;
     border-color: rgba(255, 255, 255, 0.22) !important;
     color: #fff !important;
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
       0 0 0 1px rgba(0, 0, 0, 0.12);
   }
 
@@ -252,7 +255,7 @@ body {
 
   .glass-nav input:focus {
     border-color: rgba(255, 255, 255, 0.4) !important;
-    background: rgba(255, 255, 255, 0.12) !important;
+    background: rgba(0, 0, 0, 0.45) !important;
   }
 
   .glass-dropzone {
@@ -353,8 +356,8 @@ body {
     align-items: center;
     gap: 0.4rem;
     border-radius: 999px;
-    padding: 0.45rem 0.9rem;
-    font-size: 0.8rem;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
     font-weight: 500;
     color: #fff;
     background:
@@ -375,6 +378,13 @@ body {
       border-color 0.2s ease,
       color 0.2s ease,
       transform 0.15s ease;
+  }
+
+  @media (min-width: 640px) {
+    .chip {
+      padding: 0.45rem 0.9rem;
+      font-size: 0.8rem;
+    }
   }
 
   .chip:hover {

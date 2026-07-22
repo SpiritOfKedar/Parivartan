@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { LanguageToggle } from "./language-toggle";
+import { MobileNav } from "./mobile-nav";
 import { NavCategoryMenu } from "./nav-category-menu";
 import { ToolSearch } from "./tool-search";
 import { getToolsByCategory } from "../lib/tools";
@@ -13,18 +14,18 @@ export function SiteHeader() {
   );
 
   return (
-    <header className="pointer-events-none fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6">
-      <div className="glass-nav pointer-events-auto relative mx-auto flex h-14 max-w-6xl items-center gap-3 overflow-visible px-3 sm:gap-4 sm:px-5">
+    <header className="pointer-events-none fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-6 sm:pt-4">
+      <div className="glass-nav pointer-events-auto relative mx-auto flex h-12 max-w-6xl items-center gap-2 overflow-visible px-2.5 sm:h-14 sm:gap-4 sm:px-5">
         <Link
           href="/"
-          className="shrink-0 font-[family-name:var(--font-display)] text-lg font-semibold tracking-tight text-white"
+          className="shrink-0 font-[family-name:var(--font-display)] text-base font-semibold tracking-tight text-white sm:text-lg"
         >
           Parivartan
         </Link>
 
         <ToolSearch
           compact
-          className="hidden min-w-0 flex-1 sm:block sm:max-w-[14rem] md:max-w-[16rem] lg:max-w-[18rem]"
+          className="hidden min-w-0 flex-1 md:block md:max-w-[14rem] lg:max-w-[18rem]"
         />
 
         <nav className="ml-auto hidden items-center gap-0.5 lg:flex">
@@ -45,8 +46,9 @@ export function SiteHeader() {
           })}
         </nav>
 
-        <div className="ml-auto shrink-0 lg:ml-0">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 lg:ml-0">
           <LanguageToggle />
+          <MobileNav categories={categories} />
         </div>
       </div>
     </header>

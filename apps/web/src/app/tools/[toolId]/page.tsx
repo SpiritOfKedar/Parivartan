@@ -207,14 +207,14 @@ export default async function ToolPage({ params }: ToolPageProps) {
 
   return (
     <main
-      className="mx-auto w-full max-w-3xl flex-1 animate-rise px-6 pb-14 pt-24"
+      className="mx-auto w-full min-w-0 max-w-3xl flex-1 animate-rise px-4 pb-10 pt-20 sm:px-6 sm:pb-14 sm:pt-24"
       style={{
         ["--accent" as string]: theme.accentVar,
         ["--accent-soft" as string]: theme.accentSoftVar,
       }}
     >
-      <div className="glass-panel-strong p-6 sm:p-8">
-        <div className="flex items-center gap-2 text-sm text-muted">
+      <div className="glass-panel-strong p-4 sm:p-8">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
           <Link href="/" className="btn-ghost !px-3 !py-1.5 !text-sm">
             <span aria-hidden="true">←</span> {messages.common.backToTools}
           </Link>
@@ -227,18 +227,20 @@ export default async function ToolPage({ params }: ToolPageProps) {
           </Link>
         </div>
 
-        <div className="mt-6 flex items-start gap-4">
+        <div className="mt-5 flex items-start gap-3 sm:mt-6 sm:gap-4">
           <span
-            className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-border text-[color:var(--accent)]"
+            className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-border text-[color:var(--accent)] sm:size-12"
             style={{ background: "var(--accent-soft)" }}
           >
-            <CategoryIcon category={category} className="size-6" />
+            <CategoryIcon category={category} className="size-5 sm:size-6" />
           </span>
-          <div className="min-w-0">
-            <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight text-foreground">
+          <div className="min-w-0 flex-1">
+            <h1 className="font-[family-name:var(--font-display)] text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
               {copy.name}
             </h1>
-            <p className="mt-1.5 text-[15px] text-muted">{copy.description}</p>
+            <p className="mt-1.5 text-sm text-muted sm:text-[15px]">
+              {copy.description}
+            </p>
           </div>
         </div>
 
@@ -246,7 +248,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
           <span className="chip">{getProcessingNote(tool, locale)}</span>
         </div>
 
-        <div className="mt-8">{renderTool()}</div>
+        <div className="mt-6 sm:mt-8">{renderTool()}</div>
       </div>
     </main>
   );
