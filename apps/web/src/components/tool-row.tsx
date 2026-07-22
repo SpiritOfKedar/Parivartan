@@ -38,7 +38,7 @@ export function ToolLink({ tool, layout }: ToolLinkProps) {
     return (
       <Link
         href={href}
-        className="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-border bg-[var(--glass-bg)] p-5 backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-[color:var(--accent)] hover:bg-[var(--glass-bg-strong)] hover:accent-glow"
+        className="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-white/12 bg-black/55 p-5 backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:border-[color:var(--accent)] hover:bg-black/65 hover:accent-glow"
       >
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-px"
@@ -71,7 +71,7 @@ export function ToolLink({ tool, layout }: ToolLinkProps) {
     return (
       <Link
         href={href}
-        className="group flex items-center gap-4 rounded-xl border border-border bg-[var(--glass-bg)] px-5 py-4 backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-[color:var(--accent)] hover:bg-[var(--glass-bg-strong)]"
+        className="group flex items-center gap-4 rounded-xl border border-white/12 bg-black/55 px-5 py-4 backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:border-[color:var(--accent)] hover:bg-black/65"
       >
         <svg
           viewBox="0 0 48 24"
@@ -99,7 +99,7 @@ export function ToolLink({ tool, layout }: ToolLinkProps) {
     return (
       <Link
         href={href}
-        className="group relative flex aspect-video flex-col justify-end overflow-hidden rounded-2xl border border-border bg-[var(--glass-bg)] p-5 backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-[color:var(--accent)] hover:accent-glow"
+        className="group relative flex aspect-video flex-col justify-end overflow-hidden rounded-2xl border border-white/12 bg-black/55 p-5 backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:border-[color:var(--accent)] hover:accent-glow"
       >
         <div
           className="absolute inset-0 opacity-60"
@@ -120,7 +120,7 @@ export function ToolLink({ tool, layout }: ToolLinkProps) {
   return (
     <Link
       href={href}
-      className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border bg-[var(--glass-bg)] p-5 backdrop-blur transition-all duration-200 hover:-translate-y-1 hover:border-[color:var(--accent)] hover:accent-glow"
+      className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/12 bg-black/55 p-5 backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 hover:border-[color:var(--accent)] hover:accent-glow"
     >
       <div
         className="pointer-events-none absolute -right-8 -top-8 size-24 rounded-full opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100"

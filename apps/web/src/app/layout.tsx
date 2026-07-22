@@ -55,6 +55,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
+      suppressHydrationWarning
       data-scroll-behavior="smooth"
       className={`h-full dark ${jakarta.variable} ${syne.variable} ${notoDevanagari.variable}`}
     >

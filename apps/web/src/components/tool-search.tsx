@@ -117,7 +117,10 @@ export function ToolSearch({
           strokeWidth={1.75}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint"
+          className={[
+            "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2",
+            compact ? "text-white/55" : "text-faint",
+          ].join(" ")}
           aria-hidden="true"
         >
           <circle cx="11" cy="11" r="7" />
@@ -138,9 +141,10 @@ export function ToolSearch({
           aria-autocomplete="list"
           placeholder={resolvedPlaceholder}
           className={[
-            "w-full rounded-full border border-border bg-[rgba(255,255,255,0.04)] pl-9 pr-3 text-sm text-foreground outline-none placeholder:text-faint",
-            "backdrop-blur transition-[border-color,box-shadow,background] focus:border-[color:var(--accent)] focus:bg-[rgba(255,255,255,0.07)] focus:shadow-[0_0_0_3px_var(--accent-soft)]",
-            compact ? "h-9" : "h-11",
+            "w-full rounded-full border pl-9 pr-3 text-sm outline-none backdrop-blur transition-[border-color,box-shadow,background]",
+            compact
+              ? "h-9 border-white/25 bg-white/10 text-white placeholder:text-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] focus:border-white/45 focus:bg-white/14"
+              : "h-11 border-border bg-[rgba(255,255,255,0.04)] text-foreground placeholder:text-faint focus:border-[color:var(--accent)] focus:bg-[rgba(255,255,255,0.07)] focus:shadow-[0_0_0_3px_var(--accent-soft)]",
           ].join(" ")}
         />
       </label>
@@ -149,7 +153,7 @@ export function ToolSearch({
         <div
           id={listId}
           role="listbox"
-          className="glass-panel absolute left-0 right-0 z-50 mt-2 max-h-80 overflow-auto p-1.5"
+          className="glass-liquid absolute left-0 right-0 z-50 mt-2 max-h-80 overflow-auto p-1.5"
         >
           {results.length === 0 ? (
             <p className="px-3 py-3 text-sm text-muted">

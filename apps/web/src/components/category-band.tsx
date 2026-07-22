@@ -17,15 +17,15 @@ interface CategoryBandProps {
 function layoutClassName(layout: string): string {
   switch (layout) {
     case "tiles":
-      return "grid gap-3 sm:grid-cols-2 lg:grid-cols-3";
+      return "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3";
     case "ledger":
-      return "grid gap-3 sm:grid-cols-2";
+      return "grid grid-cols-1 gap-3 sm:grid-cols-2";
     case "cinema":
-      return "grid gap-4 sm:grid-cols-2";
+      return "grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4";
     case "waveform":
-      return "grid gap-3 sm:grid-cols-2";
+      return "grid grid-cols-1 gap-3 sm:grid-cols-2";
     default:
-      return "grid gap-3 sm:grid-cols-2";
+      return "grid grid-cols-1 gap-3 sm:grid-cols-2";
   }
 }
 
@@ -44,30 +44,34 @@ export function CategoryBand({ category, tools, index }: CategoryBandProps) {
       : formatMessage(messages.common.toolsCount, { count: tools.length });
 
   return (
-    <Reveal variant="up" className="scroll-mt-24">
+    <Reveal variant="up" className="scroll-mt-24 w-full min-w-0">
       <section
         id={category}
+        className="w-full min-w-0"
         style={{
           ["--accent" as string]: theme.accentVar,
           ["--accent-soft" as string]: theme.accentSoftVar,
         }}
       >
-        <div className="flex items-start justify-between gap-6">
-          <div className="flex items-start gap-4">
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-border bg-[rgba(255,255,255,0.05)] p-2.5 backdrop-blur">
+        <div className="flex min-w-0 items-start justify-between gap-3 sm:gap-6">
+          <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-white/12 bg-black/40 p-2 backdrop-blur-xl sm:size-12 sm:p-2.5">
               <CategoryIcon category={category} className="size-full" />
             </span>
-            <div>
-              <div className="flex items-center gap-3">
-                <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight text-foreground">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                   {copy.label}
                 </h2>
                 <span className="text-sm tabular-nums text-faint">
                   {String(index).padStart(2, "0")}
                 </span>
               </div>
-              <p className="mt-1.5 max-w-xl text-[15px] text-muted">
+              <p className="mt-1.5 text-sm leading-relaxed text-muted sm:text-[15px]">
                 {copy.blurb}
+              </p>
+              <p className="mt-2 text-[11px] font-medium uppercase tracking-[0.18em] text-faint sm:hidden">
+                {countLabel}
               </p>
             </div>
           </div>
@@ -84,12 +88,13 @@ export function CategoryBand({ category, tools, index }: CategoryBandProps) {
           }}
         />
 
-        <div className={`mt-6 ${layoutClassName(theme.layout)}`}>
+        <div className={`mt-5 sm:mt-6 ${layoutClassName(theme.layout)}`}>
           {tools.map((tool, toolIndex) => (
             <Reveal
               key={tool.id}
               delay={Math.min(toolIndex * 55, 330)}
               variant="scale"
+              className="min-w-0"
             >
               <ToolLink tool={tool} layout={theme.layout} />
             </Reveal>

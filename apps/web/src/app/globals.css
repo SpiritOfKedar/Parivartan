@@ -13,16 +13,17 @@
   --background-elevated: #0c0f14;
   --background-subtle: #10141b;
   --foreground: #f4f6fa;
-  --muted: #a7b0bd;
-  --faint: #6b7480;
+  --muted: #c4ccd6;
+  --faint: #9aa3af;
 
-  /* Glass */
-  --glass-bg: rgba(255, 255, 255, 0.045);
-  --glass-bg-strong: rgba(255, 255, 255, 0.07);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-highlight: rgba(255, 255, 255, 0.16);
-  --glass-shadow: 0 24px 60px -28px rgba(0, 0, 0, 0.9);
-  --blur: 18px;
+  /* Glass — dark tint so white type stays readable on bright meadow clouds */
+  --glass-bg: rgba(8, 12, 18, 0.72);
+  --glass-bg-strong: rgba(8, 12, 18, 0.84);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-highlight: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 24px 60px -28px rgba(0, 0, 0, 0.85);
+  --blur: 22px;
+  --text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85), 0 4px 24px rgba(0, 0, 0, 0.55);
 
   --border: rgba(255, 255, 255, 0.09);
   --border-strong: rgba(255, 255, 255, 0.18);
@@ -74,6 +75,18 @@ body {
   font-family: var(--font-sans);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  text-shadow: var(--text-shadow);
+}
+
+/* Glass surfaces already tint dark — drop the global shadow so type stays crisp */
+.glass-panel,
+.glass-panel-strong,
+.glass-nav,
+.glass-dropzone,
+.chip,
+.btn-primary,
+.btn-ghost {
+  text-shadow: none;
 }
 
 /* Fixed meadow image behind every route / section */
@@ -83,61 +96,46 @@ body {
   z-index: -2;
   pointer-events: none;
   overflow: hidden;
+  background: #07090c;
 }
 
 .site-backdrop__media {
   position: absolute;
   inset: 0;
-  overflow: hidden;
 }
 
 .site-backdrop__image {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  height: 100vw;
-  width: 100svh;
-  max-width: none;
-  transform: translate(-50%, -50%) rotate(-90deg);
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  filter: saturate(1.05) contrast(1.02);
+  object-position: center center;
+  transform: none;
+  /* Pull luminance down so white UI type clears the bright cloud band */
+  filter: saturate(1.05) contrast(1.06) brightness(0.48);
 }
 
+/* Uniform dark veil — meadow stays visible, type stays readable everywhere */
 .site-backdrop__scrim {
   position: absolute;
   inset: 0;
   background:
     linear-gradient(
       180deg,
-      rgba(7, 9, 12, 0.35) 0%,
-      rgba(7, 9, 12, 0.45) 35%,
-      rgba(7, 9, 12, 0.72) 70%,
-      rgba(7, 9, 12, 0.88) 100%
-    );
-}
-
-.site-backdrop__vignette {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(
-      90% 70% at 50% 20%,
-      transparent 20%,
-      rgba(7, 9, 12, 0.55) 100%
+      rgba(4, 6, 10, 0.72) 0%,
+      rgba(4, 6, 10, 0.64) 28%,
+      rgba(7, 9, 12, 0.66) 55%,
+      rgba(7, 9, 12, 0.74) 78%,
+      rgba(7, 9, 12, 0.86) 100%
     );
 }
 
 .site-backdrop__grain {
   position: absolute;
   inset: 0;
-  opacity: 0.04;
+  opacity: 0.035;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* Keep legacy class as a no-op so older references don't break */
-.atmosphere {
-  display: none;
 }
 
 @layer components {
@@ -163,41 +161,108 @@ body {
       inset 0 1px 0 0 var(--glass-highlight);
   }
 
-  /* Navbar: frosted glass with enough dark tint for white text over bright clouds */
+  /* Floating island: liquid glass — translucent so the meadow refracts through */
   .glass-nav {
-    background: rgba(6, 10, 16, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background:
+      linear-gradient(
+        165deg,
+        rgba(255, 255, 255, 0.22) 0%,
+        rgba(255, 255, 255, 0.06) 42%,
+        rgba(255, 255, 255, 0.1) 100%
+      ),
+      rgba(12, 16, 24, 0.42);
+    border: 1px solid rgba(255, 255, 255, 0.28);
     border-radius: 999px;
-    backdrop-filter: blur(22px) saturate(160%);
-    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    backdrop-filter: blur(48px) saturate(190%);
+    -webkit-backdrop-filter: blur(48px) saturate(190%);
     box-shadow:
-      0 14px 44px -18px rgba(0, 0, 0, 0.65),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
+      0 12px 40px -12px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+      inset 0 -1px 0 0 rgba(255, 255, 255, 0.06);
+    isolation: isolate;
+  }
+
+  /* Mega-menu / floating panels — same liquid glass language */
+  .glass-liquid {
+    position: relative;
+    background:
+      linear-gradient(
+        160deg,
+        rgba(255, 255, 255, 0.2) 0%,
+        rgba(255, 255, 255, 0.05) 38%,
+        rgba(255, 255, 255, 0.08) 100%
+      ),
+      rgba(10, 14, 22, 0.38);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 1.25rem;
+    backdrop-filter: blur(52px) saturate(200%);
+    -webkit-backdrop-filter: blur(52px) saturate(200%);
+    box-shadow:
+      0 28px 64px -24px rgba(0, 0, 0, 0.65),
+      0 0 0 1px rgba(255, 255, 255, 0.04),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.42),
+      inset 0 -1px 0 0 rgba(255, 255, 255, 0.06);
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .glass-liquid::before {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+      radial-gradient(
+        120% 80% at 10% -20%,
+        rgba(255, 255, 255, 0.28) 0%,
+        transparent 55%
+      ),
+      radial-gradient(
+        90% 60% at 100% 0%,
+        rgba(255, 255, 255, 0.1) 0%,
+        transparent 45%
+      );
+    opacity: 0.9;
+  }
+
+  .glass-liquid > * {
+    position: relative;
+    z-index: 1;
   }
 
   .glass-nav a,
-  .glass-nav input,
   .glass-nav button {
-    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
+    color: #fff;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.35);
   }
 
   .glass-nav input {
-    background: rgba(0, 0, 0, 0.35) !important;
-    border-color: rgba(255, 255, 255, 0.28) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.22) !important;
     color: #fff !important;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+      0 0 0 1px rgba(0, 0, 0, 0.12);
   }
 
   .glass-nav input::placeholder {
-    color: rgba(255, 255, 255, 0.6) !important;
+    color: rgba(255, 255, 255, 0.55) !important;
+  }
+
+  .glass-nav input:focus {
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    background: rgba(255, 255, 255, 0.12) !important;
   }
 
   .glass-dropzone {
     position: relative;
     border-radius: 1rem;
-    border: 1px dashed var(--border-strong);
-    background: var(--glass-bg);
-    backdrop-filter: blur(var(--blur)) saturate(140%);
-    -webkit-backdrop-filter: blur(var(--blur)) saturate(140%);
+    border: 1px dashed rgba(255, 255, 255, 0.28);
+    background: rgba(6, 10, 16, 0.78);
+    backdrop-filter: blur(calc(var(--blur) + 4px)) saturate(150%);
+    -webkit-backdrop-filter: blur(calc(var(--blur) + 4px)) saturate(150%);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
     transition:
       border-color 0.2s ease,
       background 0.2s ease,
@@ -208,10 +273,11 @@ body {
   .glass-dropzone:hover,
   .glass-dropzone[data-dragging="true"] {
     border-color: var(--accent);
-    background: var(--glass-bg-strong);
+    background: rgba(6, 10, 16, 0.88);
     box-shadow:
       0 0 0 1px var(--accent-soft),
-      0 22px 50px -30px var(--accent);
+      0 22px 50px -30px var(--accent),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
   }
 
   .btn-primary {
@@ -287,14 +353,23 @@ body {
     align-items: center;
     gap: 0.4rem;
     border-radius: 999px;
-    padding: 0.4rem 0.85rem;
+    padding: 0.45rem 0.9rem;
     font-size: 0.8rem;
     font-weight: 500;
-    color: var(--foreground);
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(var(--blur));
-    -webkit-backdrop-filter: blur(var(--blur));
+    color: #fff;
+    background:
+      linear-gradient(
+        165deg,
+        rgba(255, 255, 255, 0.18) 0%,
+        rgba(255, 255, 255, 0.05) 100%
+      ),
+      rgba(12, 16, 24, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.35),
+      0 8px 24px -12px rgba(0, 0, 0, 0.45);
     transition:
       background 0.2s ease,
       border-color 0.2s ease,
@@ -324,6 +399,28 @@ body {
   animation: rise 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+@keyframes scroll-cue {
+  0%,
+  100% {
+    transform: scaleY(0.55);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.hero-scroll-hint__line {
+  display: inline-block;
+  width: 1.5px;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  transform-origin: top center;
+  animation: scroll-cue 1.8s ease-in-out infinite;
+}
+
 /* Scroll-triggered reveals */
 .reveal {
   opacity: 0;
@@ -334,6 +431,7 @@ body {
     filter 0.75s cubic-bezier(0.16, 1, 0.3, 1);
   transition-delay: var(--reveal-delay, 0ms);
   will-change: opacity, transform, filter;
+  max-width: 100%;
 }
 
 .reveal--up {
@@ -354,11 +452,28 @@ body {
   transform: none;
 }
 
+@media (max-width: 639px) {
+  .reveal {
+    filter: none;
+  }
+
+  .reveal--up {
+    transform: translateY(16px);
+  }
+
+  .reveal--scale {
+    transform: translateY(12px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
   .animate-rise {
+    animation: none;
+  }
+  .hero-scroll-hint__line {
     animation: none;
   }
   .reveal {

@@ -6,7 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useOptimistic,
+  useState,
   useTransition,
   type ReactNode,
 } from "react";
@@ -41,10 +41,11 @@ export function LocaleProvider({
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
-  const [locale, setOptimisticLocale] = useOptimistic(
-    initialLocale,
-    (_current, next: Locale) => next,
-  );
+  const [locale, setLocaleState] = useState(initialLocale);
+
+  useEffect(() => {
+    setLocaleState(initialLocale);
+  }, [initialLocale]);
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -54,12 +55,12 @@ export function LocaleProvider({
     (next: Locale) => {
       if (!isLocale(next) || next === locale) return;
       persistLocale(next);
+      setLocaleState(next);
       startTransition(() => {
-        setOptimisticLocale(next);
         router.refresh();
       });
     },
-    [locale, router, setOptimisticLocale, startTransition],
+    [locale, router, startTransition],
   );
 
   const value = useMemo(

@@ -12,15 +12,28 @@ export type Messages = {
     searchTools: string;
     searchPlaceholder: string;
     noToolsMatch: string;
+    menu: {
+      organizePdf: string;
+      convertPdf: string;
+      editImage: string;
+      enhanceImage: string;
+      convertImage: string;
+      toPdf: string;
+      fromPdf: string;
+      videoTools: string;
+      audioTools: string;
+    };
   };
   hero: {
     chip: string;
+    brand: string;
     line1: string;
     line2Before: string;
     line2Emphasized: string;
     line2After: string;
     body: string;
     imageAlt: string;
+    scrollHint: string;
   };
   footer: {
     privacy: string;
@@ -240,16 +253,29 @@ export const en: Messages = {
     searchTools: "Search tools",
     searchPlaceholder: "Search tools…",
     noToolsMatch: "No tools match “{query}”.",
+    menu: {
+      organizePdf: "Organize & edit",
+      convertPdf: "Convert & AI",
+      editImage: "Edit",
+      enhanceImage: "Enhance",
+      convertImage: "Convert",
+      toPdf: "Convert to PDF",
+      fromPdf: "Convert from PDF",
+      videoTools: "Video tools",
+      audioTools: "Audio tools",
+    },
   },
   hero: {
     chip: "Runs privately in your browser",
+    brand: "Parivartan",
     line1: "Everything you need",
     line2Before: "to ",
     line2Emphasized: "transform",
     line2After: " a file.",
-    body: "Parivartan is a premium suite of tools for images, PDFs, video, and audio. Fast, private, and free. No account, no uploads for most tasks.",
+    body: "Premium tools for images, PDFs, video, and audio. Fast, private, and free.",
     imageAlt:
       "A figure resting in a sunlit meadow beneath towering clouds",
+    scrollHint: "Browse tools",
   },
   footer: {
     privacy: "Files are processed privately and deleted within 24 hours.",
@@ -332,7 +358,7 @@ export const en: Messages = {
     "edit-pdf": {
       name: "Edit PDF",
       description:
-        "Add text overlays to your PDF pages. Runs locally in your browser.",
+        "Add text overlays to your PDF pages.",
     },
     "watermark-pdf": {
       name: "Watermark PDF",
@@ -356,7 +382,7 @@ export const en: Messages = {
     "protect-pdf": {
       name: "Protect PDF",
       description:
-        "Password-protect a PDF. Encryption happens locally in your browser.",
+        "Password-protect a PDF with local encryption.",
     },
     "page-numbers-pdf": {
       name: "Add Page Numbers",
@@ -399,7 +425,7 @@ export const en: Messages = {
     "resize-image": {
       name: "Resize Image",
       description:
-        "Change image dimensions by pixels or percentage. Runs locally in your browser.",
+        "Change image dimensions by pixels or percentage.",
     },
     "crop-image": {
       name: "Crop Image",
@@ -409,7 +435,7 @@ export const en: Messages = {
     "convert-to-jpg": {
       name: "Convert to JPG",
       description:
-        "Turn PNG, GIF, WebP, and other images into JPG. Runs locally in your browser.",
+        "Turn PNG, GIF, WebP, and other images into JPG.",
     },
     "convert-from-jpg": {
       name: "Convert from JPG",
@@ -419,17 +445,17 @@ export const en: Messages = {
     "photo-editor": {
       name: "Photo Editor",
       description:
-        "Crop, rotate, adjust colors, add text, draw, and apply filters. Runs locally in your browser.",
+        "Crop, rotate, adjust colors, add text, draw, and apply filters.",
     },
     "upscale-image": {
       name: "Upscale Image",
       description:
-        "AI super-resolution to 2× or 4× resolution. Runs locally in your browser.",
+        "AI super-resolution to 2× or 4× resolution.",
     },
     "remove-background": {
       name: "Remove Background",
       description:
-        "Automatically remove the background and export a transparent PNG. Runs locally in your browser.",
+        "Automatically remove the background and export a transparent PNG.",
     },
     "watermark-image": {
       name: "Watermark Image",
@@ -439,12 +465,12 @@ export const en: Messages = {
     "meme-generator": {
       name: "Meme Generator",
       description:
-        "Caption an image with classic top and bottom meme text. Runs locally in your browser.",
+        "Caption an image with classic top and bottom meme text.",
     },
     "rotate-image": {
       name: "Rotate Image",
       description:
-        "Rotate JPG, PNG, WebP, or GIF images by 90°, 180°, or 270°. Runs locally in your browser.",
+        "Rotate JPG, PNG, WebP, or GIF images by 90°, 180°, or 270°.",
     },
     "html-to-image": {
       name: "HTML to Image",
@@ -454,7 +480,7 @@ export const en: Messages = {
     "blur-faces": {
       name: "Blur Faces",
       description:
-        "Detect and blur faces for privacy. Runs locally in your browser.",
+        "Detect and blur faces for privacy.",
     },
     "merge-audio": {
       name: "Merge Audio",

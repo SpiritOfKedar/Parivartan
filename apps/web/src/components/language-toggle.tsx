@@ -9,7 +9,7 @@ export function LanguageToggle() {
     <div
       role="group"
       aria-label={messages.nav.language}
-      className="flex shrink-0 items-center rounded-full border border-white/20 bg-black/25 p-0.5 text-xs font-medium"
+      className="flex shrink-0 items-center rounded-full border border-white/25 bg-white/10 p-0.5 text-xs font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] backdrop-blur-md"
     >
       <button
         type="button"

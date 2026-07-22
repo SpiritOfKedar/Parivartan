@@ -11,8 +11,8 @@ export default function Home() {
     <>
       <Hero categories={categories} />
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-20 sm:px-10">
-        <div className="space-y-24">
+      <main className="relative mx-auto w-full max-w-6xl flex-1 px-6 pb-24 pt-10 sm:px-10 sm:pt-14">
+        <div className="space-y-20 sm:space-y-24">
           {groups.map((group, i) => (
             <CategoryBand
               key={group.category}

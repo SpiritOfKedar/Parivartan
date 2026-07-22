@@ -213,39 +213,41 @@ export default async function ToolPage({ params }: ToolPageProps) {
         ["--accent-soft" as string]: theme.accentSoftVar,
       }}
     >
-      <div className="flex items-center gap-2 text-sm text-faint">
-        <Link href="/" className="btn-ghost !px-3 !py-1.5 !text-sm">
-          <span aria-hidden="true">←</span> {messages.common.backToTools}
-        </Link>
-        <span aria-hidden="true">/</span>
-        <Link
-          href={`/#${category}`}
-          className="transition-colors hover:text-foreground"
-        >
-          {messages.categories[category].label}
-        </Link>
-      </div>
-
-      <div className="mt-8 flex items-start gap-4">
-        <span
-          className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-border text-[color:var(--accent)]"
-          style={{ background: "var(--accent-soft)" }}
-        >
-          <CategoryIcon category={category} className="size-6" />
-        </span>
-        <div className="min-w-0">
-          <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight text-foreground">
-            {copy.name}
-          </h1>
-          <p className="mt-1.5 text-[15px] text-muted">{copy.description}</p>
+      <div className="glass-panel-strong p-6 sm:p-8">
+        <div className="flex items-center gap-2 text-sm text-muted">
+          <Link href="/" className="btn-ghost !px-3 !py-1.5 !text-sm">
+            <span aria-hidden="true">←</span> {messages.common.backToTools}
+          </Link>
+          <span aria-hidden="true">/</span>
+          <Link
+            href={`/#${category}`}
+            className="transition-colors hover:text-foreground"
+          >
+            {messages.categories[category].label}
+          </Link>
         </div>
-      </div>
 
-      <div className="mt-4">
-        <span className="chip">{getProcessingNote(tool, locale)}</span>
-      </div>
+        <div className="mt-6 flex items-start gap-4">
+          <span
+            className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-border text-[color:var(--accent)]"
+            style={{ background: "var(--accent-soft)" }}
+          >
+            <CategoryIcon category={category} className="size-6" />
+          </span>
+          <div className="min-w-0">
+            <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight text-foreground">
+              {copy.name}
+            </h1>
+            <p className="mt-1.5 text-[15px] text-muted">{copy.description}</p>
+          </div>
+        </div>
 
-      <div className="glass-panel mt-8 p-6 sm:p-8">{renderTool()}</div>
+        <div className="mt-4">
+          <span className="chip">{getProcessingNote(tool, locale)}</span>
+        </div>
+
+        <div className="mt-8">{renderTool()}</div>
+      </div>
     </main>
   );
 }

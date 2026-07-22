@@ -1,5 +1,5 @@
 /**
- * Fixed site-wide meadow backdrop so every page/section sits over the same image.
+ * Fixed site-wide meadow backdrop — landscape image, light scrim only.
  */
 export function SiteBackdrop() {
   return (
@@ -7,14 +7,15 @@ export function SiteBackdrop() {
       <div className="site-backdrop__media">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/hero.jpg"
+          src="/meadow.jpg"
           alt=""
           className="site-backdrop__image"
+          width={1024}
+          height={630}
           fetchPriority="high"
         />
       </div>
       <div className="site-backdrop__scrim" />
-      <div className="site-backdrop__vignette" />
       <div className="site-backdrop__grain" />
     </div>
   );
